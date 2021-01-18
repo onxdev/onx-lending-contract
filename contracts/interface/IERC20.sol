@@ -26,4 +26,8 @@ interface IERC20 {
 		address to,
 		uint256 value
 	) external returns (bool);
+
+	function burn(uint256 amount) external;
+
+	function mint(uint256 amount) external;
 }

@@ -10,7 +10,7 @@
     "compile": "npx hardhat compile",
     "test:coverage": "npx hardhat coverage",
     "deploy-ropsten": "npx hardhat run --network ropsten deploy/deploy.js",
-    "deploy-mainnet": "npx hardhat run --network mainnet deploy/deploy.js"
+eeeddvvv    "deploy-mainnet": "npx hardhat run --network mainnet deploy/deploy.js"
   },
   "repository": {
     "type": "git"
