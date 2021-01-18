@@ -1,22 +1,15 @@
 let fs = require("fs");
 let path = require("path");
 const ethers = require("ethers")
-const ERC20 = require("../build/ERC20TOKEN.json")
-const UNIPAIR = require("../build/UniswapPairTest.json")
-const ONXBallot = require("../build/ONXBallot.json")
-const ONXConfig = require("../build/ONXConfig.json")
-const ONXPlateForm = require("../build/ONXPlatform.json")
-const ONXToken = require("../build/ONXToken")
-const ONXPool = require("../build/ONXPool")
-const ONXFactory = require("../build/ONXFactory.json")
-const ONXGovernance = require("../build/ONXGovernance.json")
-const ONXMint = require("../build/ONXMint.json")
-const ONXShare = require("../build/ONXShare.json")
-const ONXReward = require("../build/ONXReward.json")
-const ONXQuery = require("../build/ONXQuery.json")
-const ONXQuery2 = require("../build/ONXQuery2.json")
-const MasterChef = require("../build/MasterChef.json");
-const CakeLPStrategy = require("../build/CakeLPStrategy.json");
+const ERC20 = require("../artifacts/contracts/test/ERC20TOKEN.sol/ERC20TOKEN.json")
+const ONXConfig = require("../artifacts/contracts/ONXConfig.sol/ONXConfig.json")
+const ONXPlateForm = require("../artifacts/contracts/ONXPlatform.sol/ONXPlatform.json")
+const ONXToken = require("../artifacts/contracts/ONXToken.sol/ONXToken.json")
+const ONXPool = require("../artifacts/contracts/ONX.sol/ONXPool.json")
+const ONXFactory = require("../artifacts/contracts/ONXFactory.sol/ONXFactory.json")
+const ONXMint = require("../artifacts/contracts/ONXMint.sol/ONXMint.json")
+const ONXShare = require("../artifacts/contracts/ONXShare.sol/ONXShare.json")
+const CakeLPStrategy = require("../artifacts/contracts/CakeLPStrategy.sol/CakeLPStrategy.json");
 
 let ONX_ADDRESS = ""
 let USDT_ADDRESS = ""
@@ -40,16 +33,18 @@ let STRATEGY2_ADDRESS = ""
 let WBTC_TOKEN_ADDRESS = ""
 let BURGER_TOKEN_ADDRESS = ""
 
+const loadJsonFile = require('load-json-file');
+const keys = loadJsonFile.sync('./keys.json');
 
 let config = {
-    "url": "",
-    "pk": "",
+    "url": `https://ropsten.infura.io/v3/${keys.networks.ropsten.infuraKey}`,
+    "pk": keys.networks.ropsten.privateKey,
     "gasPrice": "10",
-    "walletDev": "", 
-    "walletTeam": "", 
-    "walletSpare": "", 
-    "walletPrice": "",
-    "users":[]
+    "walletDev": "0x9F00749E88b51D1B929b39AC9EC0d845F4c2aaC8", 
+    "walletTeam": "0x9F00749E88b51D1B929b39AC9EC0d845F4c2aaC8", 
+    "walletSpare": "0x9F00749E88b51D1B929b39AC9EC0d845F4c2aaC8", 
+    "walletPrice": "0x9F00749E88b51D1B929b39AC9EC0d845F4c2aaC8",
+    "users":["0x9F00749E88b51D1B929b39AC9EC0d845F4c2aaC8"]
 }
 
 if(fs.existsSync(path.join(__dirname, ".config.json"))) {
@@ -539,7 +534,7 @@ async function transfer() {
     }
 }
 
-async function run() {
+async function main() {
     console.log('deploy...')
     await deploy()
     console.log('initialize...')
@@ -570,4 +565,9 @@ async function run() {
     `)
 }
 
-run()
+main()
+  .then(() => process.exit(0))
+  .catch(error => {
+    console.error(error);
+    process.exit(1);
+  });

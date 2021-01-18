@@ -43,16 +43,7 @@ module.exports = {
             runs: 200,
           },
         },
-      },
-      {
-        version: '0.5.16',
-        settings: {
-          optimizer: {
-            enabled: true,
-            runs: 200,
-          },
-        },
-      },
+      }
     ],
   },
   paths: {
@@ -66,11 +57,5 @@ module.exports = {
   },
   etherscan: {
     apiKey: 'DUMQWHVAG4IXE2287UAKE3ZD144YJSZSTI',
-  },
-  dependencyCompiler: {
-    paths: [
-      '@uniswap/v2-periphery/contracts/UniswapV2Router02.sol',
-      '@uniswap/v2-core/contracts/UniswapV2Factory.sol',
-    ],
   },
 };
