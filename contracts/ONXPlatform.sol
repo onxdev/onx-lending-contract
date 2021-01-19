@@ -4,6 +4,7 @@ import "./modules/Configable.sol";
 import "./modules/ConfigNames.sol";
 import "./libraries/SafeMath.sol";
 import "./libraries/TransferHelper.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 
 interface IONXMint {
 	function increaseProductivity(address user, uint256 value) external returns (bool);
@@ -86,7 +87,7 @@ interface IStkrETH {
 	function ratio() external view returns (uint256);
 }
 
-contract ONXPlatform is Configable {
+contract ONXPlatform is Configable, Initializable {
 	using SafeMath for uint256;
 	uint256 private unlocked = 1;
 	address public lendToken;
@@ -112,12 +113,12 @@ contract ONXPlatform is Configable {
 		address _pool,
 		address _lendToken,
 		address _collateralToken,
-		address _strkEth
-	) external onlyOwner {
+		address _stkrEth
+	) external initializer {
 		pool = _pool;
 		lendToken = _lendToken;
 		collateralToken = _collateralToken;
-		stkrEth = _strkEth;
+		stkrEth = _stkrEth;
 	}
 
 	function deposit(uint256 _amountDeposit) external lock poolExist {
@@ -128,12 +129,16 @@ contract ONXPlatform is Configable {
 	}
 
 	function depositETH() external payable lock poolExist {
-		require(lendToken == IConfig(config).WETH(), "INVALID WETH POOL");
+		uint256 val = msg.value;
+
+		require(val > 0, "ONXPlatform.sol::depositETH: Value must be greater than zero");
 		require(IConfig(config).getValue(ConfigNames.DEPOSIT_ENABLE) == 1, "NOT ENABLE NOW");
-		IWETH(IConfig(config).WETH()).deposit{value: msg.value}();
-		TransferHelper.safeTransfer(lendToken, pool, msg.value);
-		IONXPool(pool).deposit(msg.value, msg.sender);
-		_updateProdutivity();
+		// deposit to farm contract
+		//#FARM.deposit(6, val);
+		// mint onxETH (this could be done with something like mintFor(user...)
+		//#onxETH.mint(val)
+		// transfer tokens to user
+		//#onxETH.transfer(msg.sender, val)
 	}
 
 	function withdraw(uint256 _amountWithdraw) external lock poolExist {

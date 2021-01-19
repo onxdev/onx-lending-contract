@@ -1,9 +1,10 @@
 let fs = require("fs");
 let path = require("path");
-const ethers = require("ethers")
+const { ethers, upgrades } = require("hardhat");
+
 const ERC20 = require("../artifacts/contracts/test/ERC20TOKEN.sol/ERC20TOKEN.json")
 const ONXConfig = require("../artifacts/contracts/ONXConfig.sol/ONXConfig.json")
-const ONXPlateForm = require("../artifacts/contracts/ONXPlatform.sol/ONXPlatform.json")
+const ONXPlatform = require("../artifacts/contracts/ONXPlatform.sol/ONXPlatform.json")
 const ONXToken = require("../artifacts/contracts/ONXToken.sol/ONXToken.json")
 const ONXPool = require("../artifacts/contracts/ONX.sol/ONXPool.json")
 const ONXFactory = require("../artifacts/contracts/ONXFactory.sol/ONXFactory.json")
@@ -104,11 +105,19 @@ async function deploy() {
   // await waitForMint(ins.deployTransaction.hash)
   // LP_TOKEN_ADDRESS = ins.address
   // console.log('LP_TOKEN_ADDRESS', LP_TOKEN_ADDRESS)
-  
+
+  // factory = new ethers.getContractFactory(
+  //   ONXPlatform.abi,
+  //   ONXPlatform.bytecode,
+  //   walletWithProvider
+  // )
+  // ins = await upgrades.deployProxy(factory, [initializer, parameters, here])
+
+  // FIXME::this part should be changed as above
   // PLATFORM
   factory = new ethers.ContractFactory(
-    ONXPlateForm.abi,
-    ONXPlateForm.bytecode,
+    ONXPlatform.abi,
+    ONXPlatform.bytecode,
     walletWithProvider
   )
   ins = await factory.deploy(ETHER_SEND_CONFIG)
@@ -215,7 +224,7 @@ async function initialize() {
 
     ins = new ethers.Contract(
         PLATFORM_ADDRESS,
-        ONXPlateForm.abi,
+        ONXPlatform.abi,
         getWallet()
       )
     tx = await ins.setupConfig(CONFIG_ADDRESS, ETHER_SEND_CONFIG)
@@ -353,11 +362,11 @@ async function initialize() {
 
     // ins = new ethers.Contract(
     //     PLATFORM_ADDRESS,
-    //     ONXPlateForm.abi,
+    //     ONXPlatform.abi,
     //     getWallet()
     //   )
     // tx = await ins.switchStrategy(AETH_ADDRESS, LP_TOKEN_ADDRESS, STRATEGY_ADDRESS, ETHER_SEND_CONFIG)
-    // console.log('ONXPlateForm switchStrategy')
+    // console.log('ONXPlatform switchStrategy')
     // await waitForMint(tx.hash)
 
 
