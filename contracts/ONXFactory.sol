@@ -25,7 +25,7 @@ contract ONXFactory is Configable {
 		getPool[_lendToken][_collateralToken] = pool;
 		allPools.push(pool);
 		isPool[pool] = true;
-		// IConfig(config).initPoolParams(pool);
+		IConfig(config).initPoolParams();
 		IONXPool(pool).setupConfig(config);
 		IONXPool(pool).init(_lendToken, _collateralToken);
 		emit PoolCreated(_lendToken, _collateralToken, pool);

@@ -20,6 +20,7 @@ contract ONXConfig {
 	address public poo;
 	address public platform;
 	address public developer;
+	address public factory;
 	address public mint;
 	address public token;
 	address public share;
@@ -59,6 +60,7 @@ contract ONXConfig {
 
 	function initialize(
 		address _platform,
+		address _factory,
 		address _mint,
 		address _token,
 		address _share,
@@ -69,6 +71,7 @@ contract ONXConfig {
 		require(msg.sender == owner || msg.sender == developer, "ONX: Config FORBIDDEN");
 		mint = _mint;
 		platform = _platform;
+		factory = _factory;
 		token = _token;
 		share = _share;
 		governor = _governor;
@@ -115,6 +118,16 @@ contract ONXConfig {
 		_setPoolParams(ConfigNames.POOL_MINT_POWER, 0, 0, 0, 10000);
 		_setPoolParams(ConfigNames.POOL_MINT_BORROW_PERCENT, 0, 10000, 1000, 5000);
 	}
+
+    function initPoolParams() external {
+        require(msg.sender == factory, "Config FORBIDDEN");
+        _setPoolParams(ConfigNames.POOL_BASE_INTERESTS, 0, 1e18, 1e16, 2e17);
+        _setPoolParams(ConfigNames.POOL_MARKET_FRENZY, 0, 1e18, 1e16, 2e17);
+        _setPoolParams(ConfigNames.POOL_PLEDGE_RATE, 0, 1e18, 1e16, 6e17);
+        _setPoolParams(ConfigNames.POOL_LIQUIDATION_RATE, 0, 1e18, 1e16, 9e17);
+        _setPoolParams(ConfigNames.POOL_MINT_POWER, 0, 0, 0, 10000);
+        _setPoolParams(ConfigNames.POOL_MINT_BORROW_PERCENT, 0, 10000, 1000, 5000);
+    }
 
 	function _setPoolValue(bytes32 _key, uint256 _value) internal {
 		poolParams[_key].value = _value;

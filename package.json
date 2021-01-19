@@ -9,6 +9,7 @@
     "test": "npx hardhat test",
     "compile": "npx hardhat compile",
     "test:coverage": "npx hardhat coverage",
+    "deploy-hardhat": "npx hardhat run --network hardhat deploy/deploy.js",
     "deploy-ropsten": "npx hardhat run --network ropsten deploy/deploy.js",
     "deploy-mainnet": "npx hardhat run --network mainnet deploy/deploy.js"
   },

@@ -12,39 +12,31 @@ const ONXShare = require("../artifacts/contracts/ONXShare.sol/ONXShare.json")
 const CakeLPStrategy = require("../artifacts/contracts/CakeLPStrategy.sol/CakeLPStrategy.json");
 
 let ONX_ADDRESS = ""
-let USDT_ADDRESS = ""
-let BUSD_ADDRESS = ""
+let AETH_ADDRESS = ""
 let LP_TOKEN_ADDRESS = ""
-let REWARD_TOKEN_ADDRESS = ""
 let PLATFORM_ADDRESS = ""
-let GOVERNANCE_ADDRESS = ""
 let CONFIG_ADDRESS = ""
+let POOL_ADDRESS = ""
 let FACTORY_ADDRESS = ""
 let MINT_ADDRESS = ""
 let SHARE_ADDRESS = ""
-let REWARD_ADDRESS = ""
-let QUERY_ADDRESS = ""
-let QUERY2_ADDRESS = ""
 
 let MASTERCHEF_ADDRESS = ""
 let STRATEGY_ADDRESS = ""
 let STRATEGY2_ADDRESS = ""
 
-let WBTC_TOKEN_ADDRESS = ""
-let BURGER_TOKEN_ADDRESS = ""
-
 const loadJsonFile = require('load-json-file');
 const keys = loadJsonFile.sync('./keys.json');
 
 let config = {
-    "url": `https://ropsten.infura.io/v3/${keys.networks.ropsten.infuraKey}`,
-    "pk": keys.networks.ropsten.privateKey,
-    "gasPrice": "10",
-    "walletDev": "0x9F00749E88b51D1B929b39AC9EC0d845F4c2aaC8", 
-    "walletTeam": "0x9F00749E88b51D1B929b39AC9EC0d845F4c2aaC8", 
-    "walletSpare": "0x9F00749E88b51D1B929b39AC9EC0d845F4c2aaC8", 
-    "walletPrice": "0x9F00749E88b51D1B929b39AC9EC0d845F4c2aaC8",
-    "users":["0x9F00749E88b51D1B929b39AC9EC0d845F4c2aaC8"]
+    "url": `http://127.0.0.1:8545`,
+    "pk": "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
+    "gasPrice": "80",
+    "walletDev": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266", 
+    "walletTeam": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266", 
+    "walletSpare": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266", 
+    "walletPrice": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+    "users":["0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"]
 }
 
 if(fs.existsSync(path.join(__dirname, ".config.json"))) {
@@ -96,35 +88,22 @@ async function deploy() {
     ERC20.bytecode,
     walletWithProvider
   )
-  let ins = await factory.deploy('USDT','USDT','18','100000000000000000000000000',ETHER_SEND_CONFIG)
+  let ins = await factory.deploy('aETH','aETH','18','100000000000000000000000000',ETHER_SEND_CONFIG)
   await waitForMint(ins.deployTransaction.hash)
-  USDT_ADDRESS = ins.address
+  AETH_ADDRESS = ins.address
+  console.log('AETH_ADDRESS', AETH_ADDRESS)
 
-  ins = await factory.deploy('BUSDT','BUSD','18','100000000000000000000000000',ETHER_SEND_CONFIG)
-  await waitForMint(ins.deployTransaction.hash)
-  BUSD_ADDRESS = ins.address
-
-  ins = await factory.deploy('CAKE','CAKE','18','100000000000000000000000000',ETHER_SEND_CONFIG)
-  await waitForMint(ins.deployTransaction.hash)
-  REWARD_TOKEN_ADDRESS = ins.address
-
-  ins = await factory.deploy('WBTC','WBTC','18','100000000000000000000000000',ETHER_SEND_CONFIG)
-  await waitForMint(ins.deployTransaction.hash)
-  WBTC_TOKEN_ADDRESS = ins.address
-
-  ins = await factory.deploy('BURGER','BURGER','18','100000000000000000000000000',ETHER_SEND_CONFIG)
-  await waitForMint(ins.deployTransaction.hash)
-  BURGER_TOKEN_ADDRESS = ins.address
-
-  // LP
-  factory = new ethers.ContractFactory(
-    UNIPAIR.abi,
-    UNIPAIR.bytecode,
-    walletWithProvider
-  )
-  ins = await factory.deploy(ETHER_SEND_CONFIG)
-  await waitForMint(ins.deployTransaction.hash)
-  LP_TOKEN_ADDRESS = ins.address
+  // // aETH
+  // factory = new ethers.ContractFactory(
+  //   ERC20.abi,
+  //   ERC20.bytecode,
+  //   walletWithProvider
+  // )
+  // console.log('factory', factory)
+  // ins = await factory.deploy(ETHER_SEND_CONFIG)
+  // await waitForMint(ins.deployTransaction.hash)
+  // LP_TOKEN_ADDRESS = ins.address
+  // console.log('LP_TOKEN_ADDRESS', LP_TOKEN_ADDRESS)
   
   // PLATFORM
   factory = new ethers.ContractFactory(
@@ -135,6 +114,7 @@ async function deploy() {
   ins = await factory.deploy(ETHER_SEND_CONFIG)
   await waitForMint(ins.deployTransaction.hash)
   PLATFORM_ADDRESS = ins.address
+  console.log('PLATFORM_ADDRESS', PLATFORM_ADDRESS)
 
   // ONX
   factory = new ethers.ContractFactory(
@@ -145,16 +125,7 @@ async function deploy() {
   ins = await factory.deploy(ETHER_SEND_CONFIG)
   await waitForMint(ins.deployTransaction.hash)
   ONX_ADDRESS = ins.address
-
-  // GOVERNANCE
-  factory = new ethers.ContractFactory(
-    ONXGovernance.abi,
-    ONXGovernance.bytecode,
-    walletWithProvider
-  )
-  ins = await factory.deploy(ETHER_SEND_CONFIG)
-  await waitForMint(ins.deployTransaction.hash)
-  GOVERNANCE_ADDRESS = ins.address
+  console.log('ONX_ADDRESS', ONX_ADDRESS)
 
   // CONFIG
   factory = new ethers.ContractFactory(
@@ -165,6 +136,18 @@ async function deploy() {
   ins = await factory.deploy(ETHER_SEND_CONFIG)
   await waitForMint(ins.deployTransaction.hash)
   CONFIG_ADDRESS = ins.address
+  console.log('CONFIG_ADDRESS', CONFIG_ADDRESS)
+
+  // POOL
+  factory = new ethers.ContractFactory(
+    ONXPool.abi,
+    ONXPool.bytecode,
+    walletWithProvider
+  )
+  ins = await factory.deploy(ETHER_SEND_CONFIG)
+  await waitForMint(ins.deployTransaction.hash)
+  POOL_ADDRESS = ins.address
+  console.log('POOL_ADDRESS', POOL_ADDRESS)
 
   // FACTORY
   factory = new ethers.ContractFactory(
@@ -175,6 +158,7 @@ async function deploy() {
   ins = await factory.deploy(ETHER_SEND_CONFIG)
   await waitForMint(ins.deployTransaction.hash)
   FACTORY_ADDRESS = ins.address
+  console.log('FACTORY_ADDRESS', FACTORY_ADDRESS)
 
   // MINT
   factory = new ethers.ContractFactory(
@@ -185,6 +169,7 @@ async function deploy() {
   ins = await factory.deploy(ETHER_SEND_CONFIG)
   await waitForMint(ins.deployTransaction.hash)
   MINT_ADDRESS = ins.address
+  console.log('MINT_ADDRESS', MINT_ADDRESS)
 
   // SHARE
   factory = new ethers.ContractFactory(
@@ -195,46 +180,7 @@ async function deploy() {
   ins = await factory.deploy(ETHER_SEND_CONFIG)
   await waitForMint(ins.deployTransaction.hash)
   SHARE_ADDRESS = ins.address
-
-  // REWARD
-  factory = new ethers.ContractFactory(
-    ONXReward.abi,
-    ONXReward.bytecode,
-    walletWithProvider
-  )
-  ins = await factory.deploy(ETHER_SEND_CONFIG)
-  await waitForMint(ins.deployTransaction.hash)
-  REWARD_ADDRESS = ins.address
-
-  // QUERY
-  factory = new ethers.ContractFactory(
-    ONXQuery.abi,
-    ONXQuery.bytecode,
-    walletWithProvider
-  )
-  ins = await factory.deploy(ETHER_SEND_CONFIG)
-  await waitForMint(ins.deployTransaction.hash)
-  QUERY_ADDRESS = ins.address
-
-  // QUERY2
-  factory = new ethers.ContractFactory(
-    ONXQuery2.abi,
-    ONXQuery2.bytecode,
-    walletWithProvider
-  )
-  ins = await factory.deploy(ETHER_SEND_CONFIG)
-  await waitForMint(ins.deployTransaction.hash)
-  QUERY2_ADDRESS = ins.address
-
-  // MASTERCHEF
-  factory = new ethers.ContractFactory(
-    MasterChef.abi,
-    MasterChef.bytecode,
-    walletWithProvider
-  )
-  ins = await factory.deploy(REWARD_TOKEN_ADDRESS, REWARD_TOKEN_ADDRESS, config.walletDev, 20000000, 0, ETHER_SEND_CONFIG)
-  await waitForMint(ins.deployTransaction.hash)
-  MASTERCHEF_ADDRESS = ins.address
+  console.log('SHARE_ADDRESS', SHARE_ADDRESS)
 
 }
 
@@ -255,9 +201,9 @@ async function initialize() {
     tx = await ins.setupConfig(CONFIG_ADDRESS, ETHER_SEND_CONFIG)
     await waitForMint(tx.hash)
 
-    let codeHash = ethers.utils.keccak256('0x'+ ONXBallot.bytecode)
-    tx = await ins.changeBallotByteHash(codeHash, ETHER_SEND_CONFIG)
-    await waitForMint(tx.hash)
+    // let codeHash = ethers.utils.keccak256('0x'+ ONXBallot.bytecode)
+    // tx = await ins.changeBallotByteHash(codeHash, ETHER_SEND_CONFIG)
+    // await waitForMint(tx.hash)
     
     ins = new ethers.Contract(
         MINT_ADDRESS,
@@ -276,14 +222,6 @@ async function initialize() {
     await waitForMint(tx.hash)
 
     ins = new ethers.Contract(
-        GOVERNANCE_ADDRESS,
-        ONXGovernance.abi,
-        getWallet()
-      )
-    tx = await ins.setupConfig(CONFIG_ADDRESS, ETHER_SEND_CONFIG)
-    await waitForMint(tx.hash)
-
-    ins = new ethers.Contract(
         ONX_ADDRESS,
         ONXToken.abi,
         getWallet()
@@ -291,21 +229,6 @@ async function initialize() {
     tx = await ins.setupConfig(CONFIG_ADDRESS, ETHER_SEND_CONFIG)
     await waitForMint(tx.hash)
 
-    ins = new ethers.Contract(
-        QUERY_ADDRESS,
-        ONXQuery.abi,
-        getWallet()
-      )
-    tx = await ins.setupConfig(CONFIG_ADDRESS, ETHER_SEND_CONFIG)
-    await waitForMint(tx.hash)
-
-    ins = new ethers.Contract(
-        QUERY2_ADDRESS,
-        ONXQuery2.abi,
-        getWallet()
-      )
-    tx = await ins.setupConfig(CONFIG_ADDRESS, ETHER_SEND_CONFIG)
-    await waitForMint(tx.hash)
 
     ins = new ethers.Contract(
         CONFIG_ADDRESS,
@@ -313,12 +236,14 @@ async function initialize() {
         getWallet()
       )
     tx = await ins.initialize(
-        PLATFORM_ADDRESS, 
+        PLATFORM_ADDRESS,
         FACTORY_ADDRESS,
         MINT_ADDRESS,
         ONX_ADDRESS,
         SHARE_ADDRESS,
         config.walletDev,
+        FACTORY_ADDRESS,
+        config.walletDev,   // WETH addr
         ETHER_SEND_CONFIG
     )
     console.log('ONXConfig initialize')
@@ -328,11 +253,8 @@ async function initialize() {
     console.log('ONXConfig initParameter')
     await waitForMint(tx.hash)
 
-    // tx = await ins.addMintToken(USDT_ADDRESS, ETHER_SEND_CONFIG)
+    // tx = await ins.addMintToken(AETH_ADDRESS, ETHER_SEND_CONFIG)
     // console.log('ONXConfig addMintToken')
-    // await waitForMint(tx.hash)
-    // console.log('ONXConfig addMintToken')
-    // tx = await ins.addMintToken(BUSD_ADDRESS, ETHER_SEND_CONFIG)
     // await waitForMint(tx.hash)
 
     tx = await ins.setWallets(
@@ -345,7 +267,7 @@ async function initialize() {
         [
             config.walletTeam, 
             config.walletSpare, 
-            REWARD_ADDRESS,
+            config.walletTeam, // need to remove
             config.walletPrice
         ],
         ETHER_SEND_CONFIG
@@ -353,58 +275,30 @@ async function initialize() {
     console.log('ONXConfig setWallets')
     await waitForMint(tx.hash)
 
-    ins = new ethers.Contract(
-        MINT_ADDRESS,
-        ONXMint.abi,
-        getWallet()
-      )
-    tx = await ins.initialize(ETHER_SEND_CONFIG)
-    console.log('ONXMint initialize')
-    await waitForMint(tx.hash)
+    // ins = new ethers.Contract(
+    //     MINT_ADDRESS,
+    //     ONXMint.abi,
+    //     getWallet()
+    //   )
+    // tx = await ins.initialize(ETHER_SEND_CONFIG)
+    // console.log('ONXMint initialize')
+    // await waitForMint(tx.hash)
+
     // tx = await ins.changeBorrowPower('5000', ETHER_SEND_CONFIG)
     // await waitForMint(tx.hash)
     // tx = await ins.changeInterestRatePerBlock('1000000000000000000',ETHER_SEND_CONFIG)
     // await waitForMint(tx.hash)
 
-    ins = new ethers.Contract(
-        REWARD_ADDRESS,
-        ONXReward.abi,
-        getWallet()
-      )
-    tx = await ins.initialize(BURGER_TOKEN_ADDRESS, ONX_ADDRESS, ETHER_SEND_CONFIG)
-    console.log('ONXReward initialize')
-    await waitForMint(tx.hash)
-
-    tx = await ins.changeAmountPerBlock('1000000000000000000')
-    console.log('ONXReward changeAmountPerBlock')
-    await waitForMint(tx.hash)
-
-    ins = new ethers.Contract(
-        ONX_ADDRESS,
-        ONXToken.abi,
-        getWallet()
-      )
-    tx = await ins.initialize(ETHER_SEND_CONFIG)
-    console.log('ONXToken initialize')
-    await waitForMint(tx.hash)
+    // ins = new ethers.Contract(
+    //     ONX_ADDRESS,
+    //     ONXToken.abi,
+    //     getWallet()
+    //   )
+    // tx = await ins.initialize(ETHER_SEND_CONFIG)
+    // console.log('ONXToken initialize')
+    // await waitForMint(tx.hash)
 
 
-    ins = new ethers.Contract(
-      CONFIG_ADDRESS,
-      ONXConfig.abi,
-      getWallet()
-    )
-    tx = await ins.initialize(
-        PLATFORM_ADDRESS, 
-        FACTORY_ADDRESS,
-        MINT_ADDRESS,
-        ONX_ADDRESS,
-        SHARE_ADDRESS,
-        GOVERNANCE_ADDRESS,
-        ETHER_SEND_CONFIG
-    )
-    console.log('ONXConfig initialize')
-    await waitForMint(tx.hash)
     // tx = await ins.setValue(ethers.utils.formatBytes32String("ONX_USER_MINT"), '3000', ETHER_SEND_CONFIG)
     // await waitForMint(tx.hash)
     // tx = await ins.setValue(ethers.utils.formatBytes32String("ONX_TEAM_MINT"), '7142', ETHER_SEND_CONFIG)
@@ -413,43 +307,40 @@ async function initialize() {
     // await waitForMint(tx.hash)
 
     // for pool
-    ins = new ethers.Contract(
-        LP_TOKEN_ADDRESS,
-        UNIPAIR.abi,
-        getWallet()
-      )
-    tx = await ins.initialize(WBTC_TOKEN_ADDRESS, USDT_ADDRESS, ETHER_SEND_CONFIG)
-    console.log('UNIPAIR initialize')
-    await waitForMint(tx.hash)
-    tx = await ins.mint(config.walletDev, '100000000000000000000000000', ETHER_SEND_CONFIG)
-    console.log('UNIPAIR mint')
-    await waitForMint(tx.hash)
+    // ins = new ethers.Contract(
+    //     LP_TOKEN_ADDRESS,
+    //     UNIPAIR.abi,
+    //     getWallet()
+    //   )
+    // tx = await ins.initialize(WBTC_TOKEN_ADDRESS, AETH_ADDRESS, ETHER_SEND_CONFIG)
+    // console.log('UNIPAIR initialize')
+    // await waitForMint(tx.hash)
+    // tx = await ins.mint(config.walletDev, '100000000000000000000000000', ETHER_SEND_CONFIG)
+    // console.log('UNIPAIR mint')
+    // await waitForMint(tx.hash)
 
-    ins = new ethers.Contract(
-        MASTERCHEF_ADDRESS,
-        MasterChef.abi,
-        getWallet()
-      )
-    tx = await ins.add(100, LP_TOKEN_ADDRESS, false, ETHER_SEND_CONFIG)
-    console.log('MasterChef add')
-    await waitForMint(tx.hash)
+    // ins = new ethers.Contract(
+    //     MASTERCHEF_ADDRESS,
+    //     MasterChef.abi,
+    //     getWallet()
+    //   )
+    // tx = await ins.add(100, LP_TOKEN_ADDRESS, false, ETHER_SEND_CONFIG)
+    // console.log('MasterChef add')
+    // await waitForMint(tx.hash)
+
+    LP_TOKEN_ADDRESS = AETH_ADDRESS
+
 
     ins = new ethers.Contract(
         FACTORY_ADDRESS,
         ONXFactory.abi,
         getWallet()
       )
-    tx = await ins.createPool(USDT_ADDRESS, LP_TOKEN_ADDRESS, ETHER_SEND_CONFIG)
-    console.log('ONXFactory createPool USDT', USDT_ADDRESS)
+    tx = await ins.createPool(AETH_ADDRESS, LP_TOKEN_ADDRESS, ETHER_SEND_CONFIG)
+    console.log('ONXFactory createPool AETH', AETH_ADDRESS)
     await waitForMint(tx.hash)
-    let poolAddr = await ins.getPool(USDT_ADDRESS, LP_TOKEN_ADDRESS)
+    let poolAddr = await ins.getPool(AETH_ADDRESS, LP_TOKEN_ADDRESS)
     console.log('pool address:', poolAddr)
-
-    tx = await ins.createPool(BUSD_ADDRESS, LP_TOKEN_ADDRESS, ETHER_SEND_CONFIG)
-    console.log('ONXFactory createPool BUSD', BUSD_ADDRESS)
-    await waitForMint(tx.hash)
-    let poolAddr2 = await ins.getPool(BUSD_ADDRESS, LP_TOKEN_ADDRESS)
-    console.log('pool2 address:', poolAddr2)
 
     // CakeLPStrategy
     factory = new ethers.ContractFactory(
@@ -459,79 +350,47 @@ async function initialize() {
     )
     ins = await factory.deploy(ETHER_SEND_CONFIG)
     console.log('CakeLPStrategy deploy')
-    await waitForMint(ins.deployTransaction.hash)
-    STRATEGY_ADDRESS = ins.address
-    tx = await ins.initialize(REWARD_TOKEN_ADDRESS, LP_TOKEN_ADDRESS, poolAddr, MASTERCHEF_ADDRESS, 1, ETHER_SEND_CONFIG)
-    console.log('CakeLPStrategy initialize')
-    await waitForMint(tx.hash)
 
-    ins = await factory.deploy(ETHER_SEND_CONFIG)
-    console.log('CakeLPStrategy deploy')
-    await waitForMint(ins.deployTransaction.hash)
-    STRATEGY2_ADDRESS = ins.address
-    tx = await ins.initialize(REWARD_TOKEN_ADDRESS, LP_TOKEN_ADDRESS, poolAddr2, MASTERCHEF_ADDRESS, 1, ETHER_SEND_CONFIG)
-    console.log('CakeLPStrategy initialize')
-    await waitForMint(tx.hash)
+    // ins = new ethers.Contract(
+    //     PLATFORM_ADDRESS,
+    //     ONXPlateForm.abi,
+    //     getWallet()
+    //   )
+    // tx = await ins.switchStrategy(AETH_ADDRESS, LP_TOKEN_ADDRESS, STRATEGY_ADDRESS, ETHER_SEND_CONFIG)
+    // console.log('ONXPlateForm switchStrategy')
+    // await waitForMint(tx.hash)
 
-    ins = new ethers.Contract(
-        PLATFORM_ADDRESS,
-        ONXPlateForm.abi,
-        getWallet()
-      )
-    tx = await ins.switchStrategy(USDT_ADDRESS, LP_TOKEN_ADDRESS, STRATEGY_ADDRESS, ETHER_SEND_CONFIG)
-    console.log('ONXPlateForm switchStrategy')
-    await waitForMint(tx.hash)
-
-    tx = await ins.switchStrategy(BUSD_ADDRESS, LP_TOKEN_ADDRESS, STRATEGY2_ADDRESS, ETHER_SEND_CONFIG)
-    console.log('ONXPlateForm switchStrategy')
-    await waitForMint(tx.hash)
 
     console.log('transfer...')
-    await transfer()
+    // await transfer()
 }
 
 async function transfer() {
-    ins = new ethers.Contract(
-        REWARD_TOKEN_ADDRESS,
-        ERC20.abi,
-        getWallet()
-      )
-    tx = await ins.transfer(MASTERCHEF_ADDRESS, '5000000000000000000000', ETHER_SEND_CONFIG)
-    await waitForMint(tx.hash)
+    // ins = new ethers.Contract(
+    //     REWARD_TOKEN_ADDRESS,
+    //     ERC20.abi,
+    //     getWallet()
+    //   )
+    // tx = await ins.transfer(MASTERCHEF_ADDRESS, '5000000000000000000000', ETHER_SEND_CONFIG)
+    // await waitForMint(tx.hash)
 
-    for(let user of config.users) {
-        ins = new ethers.Contract(
-            USDT_ADDRESS,
-            ERC20.abi,
-            getWallet()
-          )
-        tx = await ins.transfer(user, '5000000000000000000000', ETHER_SEND_CONFIG)
-        await waitForMint(tx.hash)
+    // for(let user of config.users) {
+    //     ins = new ethers.Contract(
+    //         AETH_ADDRESS,
+    //         ERC20.abi,
+    //         getWallet()
+    //       )
+    //     tx = await ins.transfer(user, '5000000000000000000000', ETHER_SEND_CONFIG)
+    //     await waitForMint(tx.hash)
 
-        ins = new ethers.Contract(
-          BUSD_ADDRESS,
-          ERC20.abi,
-          getWallet()
-        )
-        tx = await ins.transfer(user, '5000000000000000000000', ETHER_SEND_CONFIG)
-        await waitForMint(tx.hash)
-
-        ins = new ethers.Contract(
-            BURGER_TOKEN_ADDRESS,
-            ERC20.abi,
-            getWallet()
-          )
-        tx = await ins.transfer(user, '5000000000000000000000', ETHER_SEND_CONFIG)
-        await waitForMint(tx.hash)
-
-        ins = new ethers.Contract(
-            LP_TOKEN_ADDRESS,
-            UNIPAIR.abi,
-            getWallet()
-          )
-        tx = await ins.mint(user, '5000000000000000000000', ETHER_SEND_CONFIG)
-        await waitForMint(tx.hash)
-    }
+    //     ins = new ethers.Contract(
+    //         LP_TOKEN_ADDRESS,
+    //         UNIPAIR.abi,
+    //         getWallet()
+    //       )
+    //     tx = await ins.mint(user, '5000000000000000000000', ETHER_SEND_CONFIG)
+    //     await waitForMint(tx.hash)
+    // }
 }
 
 async function main() {
@@ -542,26 +401,18 @@ async function main() {
     console.log(`
     ONX_ADDRESS = ${ONX_ADDRESS}
     PLATFORM_ADDRESS = ${PLATFORM_ADDRESS}
-    GOVERNANCE_ADDRESS = ${GOVERNANCE_ADDRESS}
     CONFIG_ADDRESS = ${CONFIG_ADDRESS}
     FACTORY_ADDRESS = ${FACTORY_ADDRESS}
     MINT_ADDRESS = ${MINT_ADDRESS}
     SHARE_ADDRESS = ${SHARE_ADDRESS}
-    REWARD_ADDRESS = ${REWARD_ADDRESS}
-    QUERY_ADDRESS = ${QUERY_ADDRESS}
-    QUERY2_ADDRESS = ${QUERY2_ADDRESS}
 
     ===============================
     MASTERCHEF_ADDRESS = ${MASTERCHEF_ADDRESS}
     STRATEGY_ADDRESS = ${STRATEGY_ADDRESS}
     STRATEGY2_ADDRESS = ${STRATEGY2_ADDRESS}
     
-    USDT_ADDRESS = ${USDT_ADDRESS}
-    BUSD_ADDRESS = ${BUSD_ADDRESS}
+    AETH_ADDRESS = ${AETH_ADDRESS}
     LP_TOKEN_ADDRESS = ${LP_TOKEN_ADDRESS}
-    REWARD_TOKEN_ADDRESS = ${REWARD_TOKEN_ADDRESS}
-    BURGER_TOKEN_ADDRESS = ${BURGER_TOKEN_ADDRESS}
-    WBTC_TOKEN_ADDRESS = ${WBTC_TOKEN_ADDRESS}
     `)
 }
 

@@ -7,6 +7,8 @@ interface IConfig {
 
 	function platform() external view returns (address);
 
+	function factory() external view returns (address);
+
 	function mint() external view returns (address);
 
 	function token() external view returns (address);
@@ -65,6 +67,8 @@ interface IConfig {
 		uint256 _value
 	) external;
 
+    function initPoolParams() external;
+
 	function isMintToken(address _token) external returns (bool);
 
 	function prices(address _token) external returns (uint256);
@@ -113,4 +117,9 @@ contract Configable {
 		require(msg.sender == IConfig(config).governor(), "Governor FORBIDDEN");
 		_;
 	}
+
+    modifier onlyFactory() {
+        require(msg.sender == IConfig(config).factory(), 'FACTORY FORBIDDEN');
+        _;
+    }
 }

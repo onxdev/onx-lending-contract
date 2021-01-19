@@ -15,6 +15,7 @@ interface IONXMint {
 contract ONXPool is Configable, BaseMintField {
 	using SafeMath for uint256;
 
+    address public factory;
 	address public supplyToken;
 	address public collateralToken;
 
@@ -75,7 +76,12 @@ contract ONXPool is Configable, BaseMintField {
 	);
 	event Reinvest(address indexed _user, uint256 _reinvestAmount);
 
-	function init(address _supplyToken, address _collateralToken) external onlyOwner {
+    constructor() public 
+    {
+        factory = msg.sender;
+    }
+
+	function init(address _supplyToken, address _collateralToken) external onlyFactory {
 		supplyToken = _supplyToken;
 		collateralToken = _collateralToken;
 
