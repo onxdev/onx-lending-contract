@@ -53,7 +53,7 @@ contract BaseMintField is Configable {
 		}
 
 		uint256 borrowReward =
-			reward.mul(IConfig(config).getPoolValue(ConfigNames.POOL_MINT_BORROW_PERCENT)).div(10000);
+			reward.mul(IConfig(config).getPoolValue(address(this), ConfigNames.POOL_MINT_BORROW_PERCENT)).div(10000);
 		uint256 lendReward = reward.sub(borrowReward);
 
 		if (totalLendProductivity != 0 && lendReward > 0) {
@@ -156,7 +156,7 @@ contract BaseMintField is Configable {
 		if (totalBorrowProducitivity != 0) {
 			uint256 reward = _currentReward();
 			uint256 borrowReward =
-				reward.mul(IConfig(config).getPoolValue(ConfigNames.POOL_MINT_BORROW_PERCENT)).div(10000);
+				reward.mul(IConfig(config).getPoolValue(address(this), ConfigNames.POOL_MINT_BORROW_PERCENT)).div(10000);
 
 			_accAmountPerBorrow = accAmountPerBorrow.add(borrowReward.mul(1e12).div(totalBorrowProducitivity));
 		}
@@ -170,7 +170,7 @@ contract BaseMintField is Configable {
 		if (totalLendProductivity != 0) {
 			uint256 reward = _currentReward();
 			uint256 lendReward =
-				reward.sub(reward.mul(IConfig(config).getPoolValue(ConfigNames.POOL_MINT_BORROW_PERCENT)).div(10000));
+				reward.sub(reward.mul(IConfig(config).getPoolValue(address(this), ConfigNames.POOL_MINT_BORROW_PERCENT)).div(10000));
 			_accAmountPerLend = accAmountPerLend.add(lendReward.mul(1e12).div(totalLendProductivity));
 		}
 		return userInfo.amount.mul(_accAmountPerLend).div(1e12).sub(userInfo.rewardDebt).add(userInfo.rewardEarn);

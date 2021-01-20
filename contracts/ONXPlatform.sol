@@ -82,18 +82,15 @@ interface IONXPool {
 	function totalLiquidation() external view returns (uint256);
 }
 
-interface IStkrETH {
-	function ratio() external view returns (uint256);
+interface IONXFactory {
+    function getPool(address _lendToken, address _collateralToken) external view returns (address);
+    function countPools() external view returns(uint);
+    function allPools(uint index) external view returns (address);
 }
 
 contract ONXPlatform is Configable {
 	using SafeMath for uint256;
 	uint256 private unlocked = 1;
-	address public lendToken;
-	address public collateralToken;
-	address public pool;
-	address public stkrEth;
-
 	modifier lock() {
 		require(unlocked == 1, "Locked");
 		unlocked = 0;
@@ -101,116 +98,119 @@ contract ONXPlatform is Configable {
 		unlocked = 1;
 	}
 
-	modifier poolExist() {
-		require(pool != address(0), "POOL NOT EXIST");
-		_;
-	}
-
 	receive() external payable {}
 
-	function initialize(
-		address _pool,
-		address _lendToken,
-		address _collateralToken,
-		address _strkEth
-	) external onlyOwner {
-		pool = _pool;
-		lendToken = _lendToken;
-		collateralToken = _collateralToken;
-		stkrEth = _strkEth;
-	}
-
-	function deposit(uint256 _amountDeposit) external lock poolExist {
+	function deposit(address _lendToken, address _collateralToken, uint256 _amountDeposit) external lock {
 		require(IConfig(config).getValue(ConfigNames.DEPOSIT_ENABLE) == 1, "NOT ENABLE NOW");
-		TransferHelper.safeTransferFrom(lendToken, msg.sender, pool, _amountDeposit);
+		address pool = IONXFactory(IConfig(config).factory()).getPool(_lendToken, _collateralToken);
+		require(pool != address(0), "POOL NOT EXIST");
+		TransferHelper.safeTransferFrom(_lendToken, msg.sender, pool, _amountDeposit);
 		IONXPool(pool).deposit(_amountDeposit, msg.sender);
-		_updateProdutivity();
+		_updateProdutivity(pool);
 	}
 
-	function depositETH() external payable lock poolExist {
-		require(lendToken == IConfig(config).WETH(), "INVALID WETH POOL");
+	function depositETH(address _lendToken, address _collateralToken) external payable lock {
+		require(_lendToken == IConfig(config).WETH(), "INVALID WETH POOL");
 		require(IConfig(config).getValue(ConfigNames.DEPOSIT_ENABLE) == 1, "NOT ENABLE NOW");
+		address pool = IONXFactory(IConfig(config).factory()).getPool(_lendToken, _collateralToken);
+		require(pool != address(0), "POOL NOT EXIST");
 		IWETH(IConfig(config).WETH()).deposit{value: msg.value}();
-		TransferHelper.safeTransfer(lendToken, pool, msg.value);
+		TransferHelper.safeTransfer(_lendToken, pool, msg.value);
 		IONXPool(pool).deposit(msg.value, msg.sender);
-		_updateProdutivity();
+		_updateProdutivity(pool);
 	}
 
-	function withdraw(uint256 _amountWithdraw) external lock poolExist {
+	function withdraw(address _lendToken, address _collateralToken, uint256 _amountWithdraw) external lock {
 		require(IConfig(config).getValue(ConfigNames.WITHDRAW_ENABLE) == 1, "NOT ENABLE NOW");
+		address pool = IONXFactory(IConfig(config).factory()).getPool(_lendToken, _collateralToken);
+		require(pool != address(0), "POOL NOT EXIST");
 		(uint256 withdrawSupplyAmount, uint256 withdrawLiquidationAmount) =
 			IONXPool(pool).withdraw(_amountWithdraw, msg.sender);
-		if (withdrawSupplyAmount > 0) _innerTransfer(lendToken, msg.sender, withdrawSupplyAmount);
-		if (withdrawLiquidationAmount > 0) _innerTransfer(collateralToken, msg.sender, withdrawLiquidationAmount);
-		_updateProdutivity();
+		if (withdrawSupplyAmount > 0) _innerTransfer(_lendToken, msg.sender, withdrawSupplyAmount);
+		if (withdrawLiquidationAmount > 0) _innerTransfer(_collateralToken, msg.sender, withdrawLiquidationAmount);
+		_updateProdutivity(pool);
 	}
 
-	function borrow(uint256 _amountCollateral, uint256 _expectBorrow) external lock poolExist {
+	function borrow(address _lendToken, address _collateralToken, uint256 _amountCollateral, uint256 _expectBorrow) external lock {
 		require(IConfig(config).getValue(ConfigNames.BORROW_ENABLE) == 1, "NOT ENABLE NOW");
+		address pool = IONXFactory(IConfig(config).factory()).getPool(_lendToken, _collateralToken);
+		require(pool != address(0), "POOL NOT EXIST");
 		if (_amountCollateral > 0) {
-			TransferHelper.safeTransferFrom(collateralToken, msg.sender, pool, _amountCollateral);
+			TransferHelper.safeTransferFrom(_collateralToken, msg.sender, pool, _amountCollateral);
 		}
 
 		(, uint256 borrowAmountCollateral, , , ) = IONXPool(pool).borrows(msg.sender);
-		uint256 repayAmount = getRepayAmount(borrowAmountCollateral, msg.sender);
+		uint256 repayAmount = getRepayAmount(_lendToken, _collateralToken, borrowAmountCollateral, msg.sender);
 		IONXPool(pool).borrow(_amountCollateral, repayAmount, _expectBorrow, msg.sender);
-		if (_expectBorrow > 0) _innerTransfer(lendToken, msg.sender, _expectBorrow);
-		_updateProdutivity();
+		if (_expectBorrow > 0) _innerTransfer(_lendToken, msg.sender, _expectBorrow);
+		_updateProdutivity(pool);
 	}
 
-	function borrowTokenWithETH(uint256 _expectBorrow) external payable lock poolExist {
-		require(collateralToken == IConfig(config).WETH(), "INVALID WETH POOL");
+	function borrowTokenWithETH(address _lendToken, address _collateralToken, uint256 _expectBorrow) external payable lock {
+		require(_collateralToken == IConfig(config).WETH(), "INVALID WETH POOL");
 		require(IConfig(config).getValue(ConfigNames.BORROW_ENABLE) == 1, "NOT ENABLE NOW");
+		address pool = IONXFactory(IConfig(config).factory()).getPool(_lendToken, _collateralToken);
+		require(pool != address(0), "POOL NOT EXIST");
+        
 		if (msg.value > 0) {
 			IWETH(IConfig(config).WETH()).deposit{value: msg.value}();
-			TransferHelper.safeTransfer(collateralToken, pool, msg.value);
+			TransferHelper.safeTransfer(_collateralToken, pool, msg.value);
 		}
 
 		(, uint256 borrowAmountCollateral, , , ) = IONXPool(pool).borrows(msg.sender);
-		uint256 repayAmount = getRepayAmount(borrowAmountCollateral, msg.sender);
+		uint256 repayAmount = getRepayAmount(_lendToken, _collateralToken, borrowAmountCollateral, msg.sender);
 		IONXPool(pool).borrow(msg.value, repayAmount, _expectBorrow, msg.sender);
-		if (_expectBorrow > 0) _innerTransfer(lendToken, msg.sender, _expectBorrow);
-		_updateProdutivity();
+		if (_expectBorrow > 0) _innerTransfer(_lendToken, msg.sender, _expectBorrow);
+		_updateProdutivity(pool);
 	}
 
-	function repay(uint256 _amountCollateral) external lock poolExist {
+	function repay(address _lendToken, address _collateralToken, uint256 _amountCollateral) external lock {
 		require(IConfig(config).getValue(ConfigNames.REPAY_ENABLE) == 1, "NOT ENABLE NOW");
-		uint256 repayAmount = getRepayAmount(_amountCollateral, msg.sender);
+		address pool = IONXFactory(IConfig(config).factory()).getPool(_lendToken, _collateralToken);
+		require(pool != address(0), "POOL NOT EXIST");
+		uint256 repayAmount = getRepayAmount(_lendToken, _collateralToken, _amountCollateral, msg.sender);
 		if (repayAmount > 0) {
-			TransferHelper.safeTransferFrom(lendToken, msg.sender, pool, repayAmount);
+			TransferHelper.safeTransferFrom(_lendToken, msg.sender, pool, repayAmount);
 		}
 
 		IONXPool(pool).repay(_amountCollateral, msg.sender);
-		_innerTransfer(collateralToken, msg.sender, _amountCollateral);
-		_updateProdutivity();
+		_innerTransfer(_collateralToken, msg.sender, _amountCollateral);
+		_updateProdutivity(pool);
 	}
 
-	function repayETH(uint256 _amountCollateral) external payable lock poolExist {
+	function repayETH(address _lendToken, address _collateralToken, uint256 _amountCollateral) external payable lock {
 		require(IConfig(config).getValue(ConfigNames.REPAY_ENABLE) == 1, "NOT ENABLE NOW");
-		require(lendToken == IConfig(config).WETH(), "INVALID WETH POOL");
-		uint256 repayAmount = getRepayAmount(_amountCollateral, msg.sender);
+		require(_lendToken == IConfig(config).WETH(), "INVALID WETH POOL");
+
+		address pool = IONXFactory(IConfig(config).factory()).getPool(_lendToken, _collateralToken);
+		require(pool != address(0), "POOL NOT EXIST");
+		uint256 repayAmount = getRepayAmount(_lendToken, _collateralToken, _amountCollateral, msg.sender);
 		require(repayAmount <= msg.value, "INVALID VALUE");
 		if (repayAmount > 0) {
 			IWETH(IConfig(config).WETH()).deposit{value: repayAmount}();
-			TransferHelper.safeTransfer(lendToken, pool, repayAmount);
+			TransferHelper.safeTransfer(_lendToken, pool, repayAmount);
 		}
 
 		IONXPool(pool).repay(_amountCollateral, msg.sender);
-		_innerTransfer(collateralToken, msg.sender, _amountCollateral);
+		_innerTransfer(_collateralToken, msg.sender, _amountCollateral);
 		if (msg.value > repayAmount) TransferHelper.safeTransferETH(msg.sender, msg.value.sub(repayAmount));
-		_updateProdutivity();
+		_updateProdutivity(pool);
 	}
 
-	function liquidation(address _user) external lock poolExist {
+	function liquidation(address _lendToken, address _collateralToken, address _user) external lock {
 		require(IConfig(config).getValue(ConfigNames.LIQUIDATION_ENABLE) == 1, "NOT ENABLE NOW");
+		address pool = IONXFactory(IConfig(config).factory()).getPool(_lendToken, _collateralToken);
+		require(pool != address(0), "POOL NOT EXIST");
 		IONXPool(pool).liquidation(_user, msg.sender);
-		_updateProdutivity();
+		_updateProdutivity(pool);
 	}
 
-	function reinvest() external lock {
+	function reinvest(address _lendToken, address _collateralToken) external lock {
 		require(IConfig(config).getValue(ConfigNames.REINVEST_ENABLE) == 1, "NOT ENABLE NOW");
+		address pool = IONXFactory(IConfig(config).factory()).getPool(_lendToken, _collateralToken);
+		require(pool != address(0), "POOL NOT EXIST");
 		IONXPool(pool).reinvest(msg.sender);
-		_updateProdutivity();
+		_updateProdutivity(pool);
 	}
 
 	function _innerTransfer(
@@ -226,8 +226,8 @@ contract ONXPlatform is Configable {
 		}
 	}
 
-	function _updateProdutivity() internal {
-		uint256 power = IConfig(config).getPoolValue(ConfigNames.POOL_MINT_POWER);
+	function _updateProdutivity(address pool) internal {
+		uint256 power = IConfig(config).getPoolValue(pool, ConfigNames.POOL_MINT_POWER);
 		uint256 amount = IONXPool(pool).getTotalAmount().mul(power).div(10000);
 		(uint256 old, ) = IONXMint(IConfig(config).mint()).getProductivity(pool);
 		if (old > 0) {
@@ -241,7 +241,10 @@ contract ONXPlatform is Configable {
 		}
 	}
 
-	function getRepayAmount(uint256 amountCollateral, address from) public view returns (uint256 repayAmount) {
+	function getRepayAmount(address _lendToken, address _collateralToken, uint256 amountCollateral, address from) public view returns (uint256 repayAmount) {
+		address pool = IONXFactory(IConfig(config).factory()).getPool(_lendToken, _collateralToken);
+		require(pool != address(0), "POOL NOT EXIST");
+
 		(, uint256 borrowAmountCollateral, uint256 interestSettled, uint256 amountBorrow, uint256 borrowInterests) =
 			IONXPool(pool).borrows(from);
 		uint256 _interestPerBorrow =
@@ -257,13 +260,19 @@ contract ONXPlatform is Configable {
 			: amountBorrow.mul(amountCollateral).div(borrowAmountCollateral).add(repayInterest);
 	}
 
-	function getMaximumBorrowAmount(uint256 amountCollateral) external view returns (uint256 amountBorrow) {
-		uint256 pledgeAmount = IConfig(config).convertTokenAmount(collateralToken, lendToken, amountCollateral);
-		uint256 pledgeRate = IConfig(config).getPoolValue(ConfigNames.POOL_PLEDGE_RATE);
+	function getMaximumBorrowAmount(address _lendToken, address _collateralToken, uint256 amountCollateral) external view returns (uint256 amountBorrow) {
+		address pool = IONXFactory(IConfig(config).factory()).getPool(_lendToken, _collateralToken);
+		require(pool != address(0), "POOL NOT EXIST");
+
+		uint256 pledgeAmount = IConfig(config).convertTokenAmount(_collateralToken, _lendToken, amountCollateral);
+		uint256 pledgeRate = IConfig(config).getPoolValue(pool, ConfigNames.POOL_PLEDGE_RATE);
 		amountBorrow = pledgeAmount.mul(pledgeRate).div(1e18);
 	}
 
-	function getLiquidationAmount(address from) public view returns (uint256 liquidationAmount) {
+	function getLiquidationAmount(address _lendToken, address _collateralToken, address from) public view returns (uint256 liquidationAmount) {
+        	address pool = IONXFactory(IConfig(config).factory()).getPool(_lendToken, _collateralToken);
+	        require(pool != address(0), "POOL NOT EXIST");
+
 		(uint256 amountSupply, , uint256 liquidationSettled, , uint256 supplyLiquidation) =
 			IONXPool(pool).supplys(from);
 		liquidationAmount = supplyLiquidation.add(
@@ -271,7 +280,10 @@ contract ONXPlatform is Configable {
 		);
 	}
 
-	function getInterestAmount(address from) public view returns (uint256 interestAmount) {
+	function getInterestAmount(address _lendToken, address _collateralToken, address from) public view returns (uint256 interestAmount) {
+		address pool = IONXFactory(IConfig(config).factory()).getPool(_lendToken, _collateralToken);
+		require(pool != address(0), "POOL NOT EXIST");
+
 		uint256 totalBorrow = IONXPool(pool).totalBorrow();
 		uint256 totalSupply = totalBorrow + IONXPool(pool).remainSupply();
 		(uint256 amountSupply, uint256 interestSettled, , uint256 interests, ) = IONXPool(pool).supplys(from);
@@ -288,7 +300,7 @@ contract ONXPlatform is Configable {
 		interestAmount = interests.add(_interestPerSupply.mul(amountSupply).div(1e18).sub(interestSettled));
 	}
 
-	function getWithdrawAmount(address from)
+	function getWithdrawAmount(address _lendToken, address _collateralToken, address from)
 		external
 		view
 		returns (
@@ -297,8 +309,11 @@ contract ONXPlatform is Configable {
 			uint256 liquidationAmount
 		)
 	{
-		uint256 _totalInterest = getInterestAmount(from);
-		liquidationAmount = getLiquidationAmount(from);
+		address pool = IONXFactory(IConfig(config).factory()).getPool(_lendToken, _collateralToken);
+		require(pool != address(0), "POOL NOT EXIST");
+
+		uint256 _totalInterest = getInterestAmount(_lendToken, _collateralToken, from);
+		liquidationAmount = getLiquidationAmount(_lendToken, _collateralToken, from);
 		uint256 platformShare =
 			_totalInterest.mul(IConfig(config).getValue(ConfigNames.INTEREST_PLATFORM_SHARE)).div(1e18);
 		interestAmount = _totalInterest.sub(platformShare);
@@ -312,7 +327,9 @@ contract ONXPlatform is Configable {
 		else withdrawAmount = amountSupply.add(interestAmount).sub(withdrawLiquidationSupplyAmount);
 	}
 
-	function updatePoolParameter(bytes32 _key, uint256 _value) external onlyDeveloper {
-		IConfig(config).setPoolValue(_key, _value);
+	function updatePoolParameter(address _lendToken, address _collateralToken, bytes32 _key, uint256 _value) external onlyDeveloper {
+		address pool = IONXFactory(IConfig(config).factory()).getPool(_lendToken, _collateralToken);
+		require(pool != address(0), "POOL NOT EXIST");
+		IConfig(config).setPoolValue(pool, _key, _value);
 	}
 }

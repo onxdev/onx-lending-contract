@@ -15,7 +15,7 @@ contract ONXFactory is Configable {
 	mapping(address => bool) public isPool;
 	mapping(address => mapping(address => address)) public getPool;
 
-	function createPool(address _lendToken, address _collateralToken) external onlyDeveloper returns (address pool) {
+	function createPool(address _lendToken, address _collateralToken) external returns (address pool) {
 		require(getPool[_lendToken][_collateralToken] == address(0), "ALREADY CREATED");
 		bytes32 salt = keccak256(abi.encodePacked(_lendToken, _collateralToken));
 		bytes memory bytecode = type(ONXPool).creationCode;
@@ -25,7 +25,7 @@ contract ONXFactory is Configable {
 		getPool[_lendToken][_collateralToken] = pool;
 		allPools.push(pool);
 		isPool[pool] = true;
-		IConfig(config).initPoolParams();
+		IConfig(config).initPoolParams(pool);
 		IONXPool(pool).setupConfig(config);
 		IONXPool(pool).init(_lendToken, _collateralToken);
 		emit PoolCreated(_lendToken, _collateralToken, pool);

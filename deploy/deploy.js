@@ -12,8 +12,8 @@ const ONXShare = require("../artifacts/contracts/ONXShare.sol/ONXShare.json")
 const CakeLPStrategy = require("../artifacts/contracts/CakeLPStrategy.sol/CakeLPStrategy.json");
 
 let ONX_ADDRESS = ""
-let AETH_ADDRESS = ""
-let LP_TOKEN_ADDRESS = ""
+let LEND_TOKEN_ADDRESS = ""
+let COLLATERAL_TOKEN_ADDRESS = ""
 let PLATFORM_ADDRESS = ""
 let CONFIG_ADDRESS = ""
 let POOL_ADDRESS = ""
@@ -36,8 +36,11 @@ let config = {
     "walletTeam": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266", 
     "walletSpare": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266", 
     "walletPrice": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
-    "users":["0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"]
+    "users":["0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"],
+    "weth_address": "0xE95A203B1a91a908F9B9CE46459d101078c2c3cb"
 }
+
+const WETH_ADDRESS = config.weth_address
 
 if(fs.existsSync(path.join(__dirname, ".config.json"))) {
     let _config = JSON.parse(fs.readFileSync(path.join(__dirname, ".config.json")).toString());
@@ -90,20 +93,22 @@ async function deploy() {
   )
   let ins = await factory.deploy('aETH','aETH','18','100000000000000000000000000',ETHER_SEND_CONFIG)
   await waitForMint(ins.deployTransaction.hash)
-  AETH_ADDRESS = ins.address
-  console.log('AETH_ADDRESS', AETH_ADDRESS)
+  // LEND_TOKEN_ADDRESS = ins.address
+  // console.log('LEND_TOKEN_ADDRESS', LEND_TOKEN_ADDRESS)
+  
+  LEND_TOKEN_ADDRESS = ins.address
 
-  // // aETH
-  // factory = new ethers.ContractFactory(
-  //   ERC20.abi,
-  //   ERC20.bytecode,
-  //   walletWithProvider
-  // )
-  // console.log('factory', factory)
-  // ins = await factory.deploy(ETHER_SEND_CONFIG)
-  // await waitForMint(ins.deployTransaction.hash)
-  // LP_TOKEN_ADDRESS = ins.address
-  // console.log('LP_TOKEN_ADDRESS', LP_TOKEN_ADDRESS)
+  // aETH
+  factory = new ethers.ContractFactory(
+    ERC20.abi,
+    ERC20.bytecode,
+    walletWithProvider
+  )
+  console.log('factory', factory)
+  ins = await factory.deploy('aETH','aETH','18','100000000000000000000000000', ETHER_SEND_CONFIG)
+  await waitForMint(ins.deployTransaction.hash)
+  COLLATERAL_TOKEN_ADDRESS = ins.address
+  console.log('COLLATERAL_TOKEN_ADDRESS', COLLATERAL_TOKEN_ADDRESS)
   
   // PLATFORM
   factory = new ethers.ContractFactory(
@@ -242,8 +247,8 @@ async function initialize() {
         ONX_ADDRESS,
         SHARE_ADDRESS,
         config.walletDev,
-        FACTORY_ADDRESS,
-        config.walletDev,   // WETH addr
+        WETH_ADDRESS,
+        WETH_ADDRESS,
         ETHER_SEND_CONFIG
     )
     console.log('ONXConfig initialize')
@@ -253,7 +258,7 @@ async function initialize() {
     console.log('ONXConfig initParameter')
     await waitForMint(tx.hash)
 
-    // tx = await ins.addMintToken(AETH_ADDRESS, ETHER_SEND_CONFIG)
+    // tx = await ins.addMintToken(LEND_TOKEN_ADDRESS, ETHER_SEND_CONFIG)
     // console.log('ONXConfig addMintToken')
     // await waitForMint(tx.hash)
 
@@ -308,11 +313,11 @@ async function initialize() {
 
     // for pool
     // ins = new ethers.Contract(
-    //     LP_TOKEN_ADDRESS,
+    //     COLLATERAL_TOKEN_ADDRESS,
     //     UNIPAIR.abi,
     //     getWallet()
     //   )
-    // tx = await ins.initialize(WBTC_TOKEN_ADDRESS, AETH_ADDRESS, ETHER_SEND_CONFIG)
+    // tx = await ins.initialize(WBTC_TOKEN_ADDRESS, LEND_TOKEN_ADDRESS, ETHER_SEND_CONFIG)
     // console.log('UNIPAIR initialize')
     // await waitForMint(tx.hash)
     // tx = await ins.mint(config.walletDev, '100000000000000000000000000', ETHER_SEND_CONFIG)
@@ -324,11 +329,13 @@ async function initialize() {
     //     MasterChef.abi,
     //     getWallet()
     //   )
-    // tx = await ins.add(100, LP_TOKEN_ADDRESS, false, ETHER_SEND_CONFIG)
+    // tx = await ins.add(100, COLLATERAL_TOKEN_ADDRESS, false, ETHER_SEND_CONFIG)
     // console.log('MasterChef add')
     // await waitForMint(tx.hash)
 
-    LP_TOKEN_ADDRESS = AETH_ADDRESS
+    COLLATERAL_TOKEN_ADDRESS = LEND_TOKEN_ADDRESS
+    console.log('LEND_TOKEN_ADDRESS', LEND_TOKEN_ADDRESS)
+    console.log('COLLATERAL_TOKEN_ADDRESS', COLLATERAL_TOKEN_ADDRESS)
 
 
     ins = new ethers.Contract(
@@ -336,27 +343,18 @@ async function initialize() {
         ONXFactory.abi,
         getWallet()
       )
-    tx = await ins.createPool(AETH_ADDRESS, LP_TOKEN_ADDRESS, ETHER_SEND_CONFIG)
-    console.log('ONXFactory createPool AETH', AETH_ADDRESS)
+    tx = await ins.createPool(LEND_TOKEN_ADDRESS, COLLATERAL_TOKEN_ADDRESS, ETHER_SEND_CONFIG)
+    console.log('ONXFactory createPool AETH', LEND_TOKEN_ADDRESS)
     await waitForMint(tx.hash)
-    let poolAddr = await ins.getPool(AETH_ADDRESS, LP_TOKEN_ADDRESS)
+    let poolAddr = await ins.getPool(LEND_TOKEN_ADDRESS, COLLATERAL_TOKEN_ADDRESS)
     console.log('pool address:', poolAddr)
-
-    // CakeLPStrategy
-    factory = new ethers.ContractFactory(
-        CakeLPStrategy.abi,
-        CakeLPStrategy.bytecode,
-        walletWithProvider
-    )
-    ins = await factory.deploy(ETHER_SEND_CONFIG)
-    console.log('CakeLPStrategy deploy')
 
     // ins = new ethers.Contract(
     //     PLATFORM_ADDRESS,
     //     ONXPlateForm.abi,
     //     getWallet()
     //   )
-    // tx = await ins.switchStrategy(AETH_ADDRESS, LP_TOKEN_ADDRESS, STRATEGY_ADDRESS, ETHER_SEND_CONFIG)
+    // tx = await ins.switchStrategy(LEND_TOKEN_ADDRESS, COLLATERAL_TOKEN_ADDRESS, STRATEGY_ADDRESS, ETHER_SEND_CONFIG)
     // console.log('ONXPlateForm switchStrategy')
     // await waitForMint(tx.hash)
 
@@ -376,7 +374,7 @@ async function transfer() {
 
     // for(let user of config.users) {
     //     ins = new ethers.Contract(
-    //         AETH_ADDRESS,
+    //         LEND_TOKEN_ADDRESS,
     //         ERC20.abi,
     //         getWallet()
     //       )
@@ -384,7 +382,7 @@ async function transfer() {
     //     await waitForMint(tx.hash)
 
     //     ins = new ethers.Contract(
-    //         LP_TOKEN_ADDRESS,
+    //         COLLATERAL_TOKEN_ADDRESS,
     //         UNIPAIR.abi,
     //         getWallet()
     //       )
@@ -411,8 +409,8 @@ async function main() {
     STRATEGY_ADDRESS = ${STRATEGY_ADDRESS}
     STRATEGY2_ADDRESS = ${STRATEGY2_ADDRESS}
     
-    AETH_ADDRESS = ${AETH_ADDRESS}
-    LP_TOKEN_ADDRESS = ${LP_TOKEN_ADDRESS}
+    LEND_TOKEN_ADDRESS = ${LEND_TOKEN_ADDRESS}
+    COLLATERAL_TOKEN_ADDRESS = ${COLLATERAL_TOKEN_ADDRESS}
     `)
 }
 

@@ -37,7 +37,7 @@ contract ONXConfig {
 		uint256 value;
 	}
 
-	mapping(bytes32 => ConfigItem) public poolParams;
+	mapping(address => mapping(bytes32 => ConfigItem)) public poolParams;
 	mapping(bytes32 => ConfigItem) public params;
 	mapping(bytes32 => address) public wallets;
 	mapping(address => uint256) public prices;
@@ -111,26 +111,20 @@ contract ONXConfig {
 		_setParams(ConfigNames.REINVEST_ENABLE, 0, 0, 0, 1);
 		_setParams(ConfigNames.POOL_REWARD_RATE, 0, 1e18, 1e17, 5e16);
 		_setParams(ConfigNames.POOL_ARBITRARY_RATE, 0, 1e18, 1e17, 9e16);
-		_setPoolParams(ConfigNames.POOL_BASE_INTERESTS, 0, 1e18, 1e16, 2e17);
-		_setPoolParams(ConfigNames.POOL_MARKET_FRENZY, 0, 1e18, 1e16, 2e17);
-		_setPoolParams(ConfigNames.POOL_PLEDGE_RATE, 0, 1e18, 1e16, 6e17);
-		_setPoolParams(ConfigNames.POOL_LIQUIDATION_RATE, 0, 1e18, 1e16, 9e17);
-		_setPoolParams(ConfigNames.POOL_MINT_POWER, 0, 0, 0, 10000);
-		_setPoolParams(ConfigNames.POOL_MINT_BORROW_PERCENT, 0, 10000, 1000, 5000);
 	}
 
-    function initPoolParams() external {
+    function initPoolParams(address _pool) external {
         require(msg.sender == factory, "Config FORBIDDEN");
-        _setPoolParams(ConfigNames.POOL_BASE_INTERESTS, 0, 1e18, 1e16, 2e17);
-        _setPoolParams(ConfigNames.POOL_MARKET_FRENZY, 0, 1e18, 1e16, 2e17);
-        _setPoolParams(ConfigNames.POOL_PLEDGE_RATE, 0, 1e18, 1e16, 6e17);
-        _setPoolParams(ConfigNames.POOL_LIQUIDATION_RATE, 0, 1e18, 1e16, 9e17);
-        _setPoolParams(ConfigNames.POOL_MINT_POWER, 0, 0, 0, 10000);
-        _setPoolParams(ConfigNames.POOL_MINT_BORROW_PERCENT, 0, 10000, 1000, 5000);
+        _setPoolParams(_pool, ConfigNames.POOL_BASE_INTERESTS, 0, 1e18, 1e16, 2e17);
+        _setPoolParams(_pool, ConfigNames.POOL_MARKET_FRENZY, 0, 1e18, 1e16, 2e17);
+        _setPoolParams(_pool, ConfigNames.POOL_PLEDGE_RATE, 0, 1e18, 1e16, 6e17);
+        _setPoolParams(_pool, ConfigNames.POOL_LIQUIDATION_RATE, 0, 1e18, 1e16, 9e17);
+        _setPoolParams(_pool, ConfigNames.POOL_MINT_POWER, 0, 0, 0, 10000);
+        _setPoolParams(_pool, ConfigNames.POOL_MINT_BORROW_PERCENT, 0, 10000, 1000, 5000);
     }
 
-	function _setPoolValue(bytes32 _key, uint256 _value) internal {
-		poolParams[_key].value = _value;
+	function _setPoolValue(address _pool, bytes32 _key, uint256 _value) internal {
+		poolParams[_pool][_key].value = _value;
 		emit PoolParameterChange(_key, _value);
 	}
 
@@ -146,13 +140,14 @@ contract ONXConfig {
 	}
 
 	function _setPoolParams(
+		address _pool,
 		bytes32 _key,
 		uint256 _min,
 		uint256 _max,
 		uint256 _span,
 		uint256 _value
 	) internal {
-		poolParams[_key] = ConfigItem(_min, _max, _span, _value);
+		poolParams[_pool][_key] = ConfigItem(_min, _max, _span, _value);
 		emit PoolParameterChange(_key, _value);
 	}
 
@@ -194,20 +189,20 @@ contract ONXConfig {
 		emit ParameterChange(_key, _value);
 	}
 
-	function setPoolValue(bytes32 _key, uint256 _value) external {
+	function setPoolValue(address _pool, bytes32 _key, uint256 _value) external {
 		require(
 			msg.sender == owner || msg.sender == governor || msg.sender == platform || msg.sender == developer,
 			"ONX: FORBIDDEN"
 		);
-		_setPoolValue(_key, _value);
+		_setPoolValue(_pool, _key, _value);
 	}
 
 	function getValue(bytes32 _key) external view returns (uint256) {
 		return params[_key].value;
 	}
 
-	function getPoolValue(bytes32 _key) external view returns (uint256) {
-		return poolParams[_key].value;
+	function getPoolValue(address _pool, bytes32 _key) external view returns (uint256) {
+		return poolParams[_pool][_key].value;
 	}
 
 	function setParams(
@@ -225,6 +220,7 @@ contract ONXConfig {
 	}
 
 	function setPoolParams(
+		address _pool,
 		bytes32 _key,
 		uint256 _min,
 		uint256 _max,
@@ -235,7 +231,7 @@ contract ONXConfig {
 			msg.sender == owner || msg.sender == governor || msg.sender == platform || msg.sender == developer,
 			"ONX: FORBIDDEN"
 		);
-		_setPoolParams(_key, _min, _max, _span, _value);
+		_setPoolParams(_pool, _key, _min, _max, _span, _value);
 	}
 
 	function getParams(bytes32 _key)
@@ -252,7 +248,7 @@ contract ONXConfig {
 		return (item.min, item.max, item.span, item.value);
 	}
 
-	function getPoolParams(bytes32 _key)
+	function getPoolParams(address _pool, bytes32 _key)
 		external
 		view
 		returns (
@@ -262,7 +258,7 @@ contract ONXConfig {
 			uint256
 		)
 	{
-		ConfigItem memory item = poolParams[_key];
+		ConfigItem memory item = poolParams[_pool][_key];
 		return (item.min, item.max, item.span, item.value);
 	}
 

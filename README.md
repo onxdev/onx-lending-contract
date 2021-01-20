@@ -23,6 +23,11 @@ or
 npx hardhat compile
 ```
 
+## How to run node?
+
+```
+npx hardhat node
+```
 
 ## How to test?
 

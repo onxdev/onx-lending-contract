@@ -103,8 +103,8 @@ contract ONXPool is Configable, BaseMintField {
 
 	function getInterests() public view returns (uint256 interestPerBlock) {
 		uint256 totalSupply = totalBorrow + remainSupply;
-		uint256 baseInterests = IConfig(config).getPoolValue(ConfigNames.POOL_BASE_INTERESTS);
-		uint256 marketFrenzy = IConfig(config).getPoolValue(ConfigNames.POOL_MARKET_FRENZY);
+		uint256 baseInterests = IConfig(config).getPoolValue(address(this), ConfigNames.POOL_BASE_INTERESTS);
+		uint256 marketFrenzy = IConfig(config).getPoolValue(address(this), ConfigNames.POOL_MARKET_FRENZY);
 		uint256 aDay = IConfig(config).DAY();
 		interestPerBlock = totalSupply == 0
 			? 0
@@ -274,7 +274,7 @@ contract ONXPool is Configable, BaseMintField {
 
 		updateInterests();
 
-		uint256 pledgeRate = IConfig(config).getPoolValue(ConfigNames.POOL_PLEDGE_RATE);
+		uint256 pledgeRate = IConfig(config).getPoolValue(address(this), ConfigNames.POOL_PLEDGE_RATE);
 		uint256 maxAmount =
 			IConfig(config).convertTokenAmount(
 				collateralToken,
@@ -366,12 +366,15 @@ contract ONXPool is Configable, BaseMintField {
 			interestPerBorrow.mul(borrows[_user].amountBorrow).div(1e18).sub(borrows[_user].interestSettled)
 		);
 
-		uint256 liquidationRate = IConfig(config).getPoolValue(ConfigNames.POOL_LIQUIDATION_RATE);
+		uint256 liquidationRate = IConfig(config).getPoolValue(address(this), ConfigNames.POOL_LIQUIDATION_RATE);
 
-		// uint pledgePrice = IConfig(config).getPoolValue(address(this), ConfigNames.POOL_PRICE);
-		// uint collateralValue = borrows[_user].amountCollateral.mul(pledgePrice).div(1e18);
-		uint256 collateralValue =
-			IConfig(config).convertTokenAmount(collateralToken, supplyToken, borrows[_user].amountCollateral);
+		////// Used pool price for liquidation limit check
+		uint pledgePrice = IConfig(config).getPoolValue(address(this), ConfigNames.POOL_PRICE);
+		uint collateralValue = borrows[_user].amountCollateral.mul(pledgePrice).div(1e18);
+
+		////// Need to set token price for liquidation
+		// uint256 collateralValue =
+		// 	IConfig(config).convertTokenAmount(collateralToken, supplyToken, borrows[_user].amountCollateral);
 
 		uint256 expectedRepay = borrows[_user].amountBorrow.add(borrows[_user].interests);
 

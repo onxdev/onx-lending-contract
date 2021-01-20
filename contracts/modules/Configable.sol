@@ -21,7 +21,7 @@ interface IConfig {
 
 	function governor() external view returns (address);
 
-	function getPoolValue(bytes32 key) external view returns (uint256);
+	function getPoolValue(address _pool, bytes32 key) external view returns (uint256);
 
 	function getValue(bytes32 key) external view returns (uint256);
 
@@ -35,7 +35,7 @@ interface IConfig {
 			uint256
 		);
 
-	function getPoolParams(bytes32 key)
+	function getPoolParams(address _pool, bytes32 key)
 		external
 		view
 		returns (
@@ -49,7 +49,7 @@ interface IConfig {
 
 	function setValue(bytes32 key, uint256 value) external;
 
-	function setPoolValue(bytes32 key, uint256 value) external;
+	function setPoolValue(address pool, bytes32 key, uint256 value) external;
 
 	function setParams(
 		bytes32 _key,
@@ -60,6 +60,7 @@ interface IConfig {
 	) external;
 
 	function setPoolParams(
+		address _pool,
 		bytes32 _key,
 		uint256 _min,
 		uint256 _max,
@@ -67,7 +68,7 @@ interface IConfig {
 		uint256 _value
 	) external;
 
-    function initPoolParams() external;
+    function initPoolParams(address _pool) external;
 
 	function isMintToken(address _token) external returns (bool);
 
