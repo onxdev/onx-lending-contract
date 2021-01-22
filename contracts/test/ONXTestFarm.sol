@@ -1,92 +1,11 @@
 /**
- *Submitted for verification at Etherscan.io on 2020-08-26
+OnX.finance
+>
+farming contract inspired from the great sushi chefs
 */
 
-// File: @openzeppelin/contracts/token/ERC20/IERC20.sol
-
-
-
-pragma solidity ^0.6.0;
-
-/**
- * @dev Interface of the ERC20 standard as defined in the EIP.
- */
-interface IERC20 {
-    /**
-     * @dev Returns the amount of tokens in existence.
-     */
-    function totalSupply() external view returns (uint256);
-
-    /**
-     * @dev Returns the amount of tokens owned by `account`.
-     */
-    function balanceOf(address account) external view returns (uint256);
-
-    /**
-     * @dev Moves `amount` tokens from the caller's account to `recipient`.
-     *
-     * Returns a boolean value indicating whether the operation succeeded.
-     *
-     * Emits a {Transfer} event.
-     */
-    function transfer(address recipient, uint256 amount) external returns (bool);
-
-    /**
-     * @dev Returns the remaining number of tokens that `spender` will be
-     * allowed to spend on behalf of `owner` through {transferFrom}. This is
-     * zero by default.
-     *
-     * This value changes when {approve} or {transferFrom} are called.
-     */
-    function allowance(address owner, address spender) external view returns (uint256);
-
-    /**
-     * @dev Sets `amount` as the allowance of `spender` over the caller's tokens.
-     *
-     * Returns a boolean value indicating whether the operation succeeded.
-     *
-     * IMPORTANT: Beware that changing an allowance with this method brings the risk
-     * that someone may use both the old and the new allowance by unfortunate
-     * transaction ordering. One possible solution to mitigate this race
-     * condition is to first reduce the spender's allowance to 0 and set the
-     * desired value afterwards:
-     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-     *
-     * Emits an {Approval} event.
-     */
-    function approve(address spender, uint256 amount) external returns (bool);
-
-    /**
-     * @dev Moves `amount` tokens from `sender` to `recipient` using the
-     * allowance mechanism. `amount` is then deducted from the caller's
-     * allowance.
-     *
-     * Returns a boolean value indicating whether the operation succeeded.
-     *
-     * Emits a {Transfer} event.
-     */
-    function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
-
-    /**
-     * @dev Emitted when `value` tokens are moved from one account (`from`) to
-     * another (`to`).
-     *
-     * Note that `value` may be zero.
-     */
-    event Transfer(address indexed from, address indexed to, uint256 value);
-
-    /**
-     * @dev Emitted when the allowance of a `spender` for an `owner` is set by
-     * a call to {approve}. `value` is the new allowance.
-     */
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-// File: @openzeppelin/contracts/math/SafeMath.sol
-
-
-
-pragma solidity ^0.6.0;
+// SPDX-License-Identifier: MIT
+pragma solidity >=0.6.0 <0.8.0;
 
 /**
  * @dev Wrappers over Solidity's arithmetic operations with added overflow
@@ -244,11 +163,79 @@ library SafeMath {
     }
 }
 
-// File: @openzeppelin/contracts/utils/Address.sol
+/**
+ * @dev Interface of the ERC20 standard as defined in the EIP.
+ */
+interface IERC20 {
+    /**
+     * @dev Returns the amount of tokens in existence.
+     */
+    function totalSupply() external view returns (uint256);
 
+    /**
+     * @dev Returns the amount of tokens owned by `account`.
+     */
+    function balanceOf(address account) external view returns (uint256);
 
+    /**
+     * @dev Moves `amount` tokens from the caller's account to `recipient`.
+     *
+     * Returns a boolean value indicating whether the operation succeeded.
+     *
+     * Emits a {Transfer} event.
+     */
+    function transfer(address recipient, uint256 amount) external returns (bool);
 
-pragma solidity ^0.6.2;
+    /**
+     * @dev Returns the remaining number of tokens that `spender` will be
+     * allowed to spend on behalf of `owner` through {transferFrom}. This is
+     * zero by default.
+     *
+     * This value changes when {approve} or {transferFrom} are called.
+     */
+    function allowance(address owner, address spender) external view returns (uint256);
+
+    /**
+     * @dev Sets `amount` as the allowance of `spender` over the caller's tokens.
+     *
+     * Returns a boolean value indicating whether the operation succeeded.
+     *
+     * IMPORTANT: Beware that changing an allowance with this method brings the risk
+     * that someone may use both the old and the new allowance by unfortunate
+     * transaction ordering. One possible solution to mitigate this race
+     * condition is to first reduce the spender's allowance to 0 and set the
+     * desired value afterwards:
+     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+     *
+     * Emits an {Approval} event.
+     */
+    function approve(address spender, uint256 amount) external returns (bool);
+
+    /**
+     * @dev Moves `amount` tokens from `sender` to `recipient` using the
+     * allowance mechanism. `amount` is then deducted from the caller's
+     * allowance.
+     *
+     * Returns a boolean value indicating whether the operation succeeded.
+     *
+     * Emits a {Transfer} event.
+     */
+    function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
+
+    /**
+     * @dev Emitted when `value` tokens are moved from one account (`from`) to
+     * another (`to`).
+     *
+     * Note that `value` may be zero.
+     */
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
+    /**
+     * @dev Emitted when the allowance of a `spender` for an `owner` is set by
+     * a call to {approve}. `value` is the new allowance.
+     */
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+}
 
 /**
  * @dev Collection of functions related to the address type
@@ -272,14 +259,14 @@ library Address {
      * ====
      */
     function isContract(address account) internal view returns (bool) {
-        // According to EIP-1052, 0x0 is the value returned for not-yet created accounts
-        // and 0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470 is returned
-        // for accounts without code, i.e. `keccak256('')`
-        bytes32 codehash;
-        bytes32 accountHash = 0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470;
+        // This method relies on extcodesize, which returns 0 for contracts in
+        // construction, since the code is only stored at the end of the
+        // constructor execution.
+
+        uint256 size;
         // solhint-disable-next-line no-inline-assembly
-        assembly { codehash := extcodehash(account) }
-        return (codehash != accountHash && codehash != 0x0);
+        assembly { size := extcodesize(account) }
+        return size > 0;
     }
 
     /**
@@ -335,7 +322,7 @@ library Address {
      * _Available since v3.1._
      */
     function functionCall(address target, bytes memory data, string memory errorMessage) internal returns (bytes memory) {
-        return _functionCallWithValue(target, data, 0, errorMessage);
+        return functionCallWithValue(target, data, 0, errorMessage);
     }
 
     /**
@@ -361,14 +348,62 @@ library Address {
      */
     function functionCallWithValue(address target, bytes memory data, uint256 value, string memory errorMessage) internal returns (bytes memory) {
         require(address(this).balance >= value, "Address: insufficient balance for call");
-        return _functionCallWithValue(target, data, value, errorMessage);
-    }
-
-    function _functionCallWithValue(address target, bytes memory data, uint256 weiValue, string memory errorMessage) private returns (bytes memory) {
         require(isContract(target), "Address: call to non-contract");
 
         // solhint-disable-next-line avoid-low-level-calls
-        (bool success, bytes memory returndata) = target.call{ value: weiValue }(data);
+        (bool success, bytes memory returndata) = target.call{ value: value }(data);
+        return _verifyCallResult(success, returndata, errorMessage);
+    }
+
+    /**
+     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],
+     * but performing a static call.
+     *
+     * _Available since v3.3._
+     */
+    function functionStaticCall(address target, bytes memory data) internal view returns (bytes memory) {
+        return functionStaticCall(target, data, "Address: low-level static call failed");
+    }
+
+    /**
+     * @dev Same as {xref-Address-functionCall-address-bytes-string-}[`functionCall`],
+     * but performing a static call.
+     *
+     * _Available since v3.3._
+     */
+    function functionStaticCall(address target, bytes memory data, string memory errorMessage) internal view returns (bytes memory) {
+        require(isContract(target), "Address: static call to non-contract");
+
+        // solhint-disable-next-line avoid-low-level-calls
+        (bool success, bytes memory returndata) = target.staticcall(data);
+        return _verifyCallResult(success, returndata, errorMessage);
+    }
+
+    /**
+     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],
+     * but performing a delegate call.
+     *
+     * _Available since v3.3._
+     */
+    function functionDelegateCall(address target, bytes memory data) internal returns (bytes memory) {
+        return functionDelegateCall(target, data, "Address: low-level delegate call failed");
+    }
+
+    /**
+     * @dev Same as {xref-Address-functionCall-address-bytes-string-}[`functionCall`],
+     * but performing a delegate call.
+     *
+     * _Available since v3.3._
+     */
+    function functionDelegateCall(address target, bytes memory data, string memory errorMessage) internal returns (bytes memory) {
+        require(isContract(target), "Address: delegate call to non-contract");
+
+        // solhint-disable-next-line avoid-low-level-calls
+        (bool success, bytes memory returndata) = target.delegatecall(data);
+        return _verifyCallResult(success, returndata, errorMessage);
+    }
+
+    function _verifyCallResult(bool success, bytes memory returndata, string memory errorMessage) private pure returns(bytes memory) {
         if (success) {
             return returndata;
         } else {
@@ -387,14 +422,6 @@ library Address {
         }
     }
 }
-
-// File: @openzeppelin/contracts/token/ERC20/SafeERC20.sol
-
-
-
-pragma solidity ^0.6.0;
-
-
 
 
 /**
@@ -465,258 +492,6 @@ library SafeERC20 {
     }
 }
 
-// File: @openzeppelin/contracts/utils/EnumerableSet.sol
-
-
-
-pragma solidity ^0.6.0;
-
-/**
- * @dev Library for managing
- * https://en.wikipedia.org/wiki/Set_(abstract_data_type)[sets] of primitive
- * types.
- *
- * Sets have the following properties:
- *
- * - Elements are added, removed, and checked for existence in constant time
- * (O(1)).
- * - Elements are enumerated in O(n). No guarantees are made on the ordering.
- *
- * ```
- * contract Example {
- *     // Add the library methods
- *     using EnumerableSet for EnumerableSet.AddressSet;
- *
- *     // Declare a set state variable
- *     EnumerableSet.AddressSet private mySet;
- * }
- * ```
- *
- * As of v3.0.0, only sets of type `address` (`AddressSet`) and `uint256`
- * (`UintSet`) are supported.
- */
-library EnumerableSet {
-    // To implement this library for multiple types with as little code
-    // repetition as possible, we write it in terms of a generic Set type with
-    // bytes32 values.
-    // The Set implementation uses private functions, and user-facing
-    // implementations (such as AddressSet) are just wrappers around the
-    // underlying Set.
-    // This means that we can only create new EnumerableSets for types that fit
-    // in bytes32.
-
-    struct Set {
-        // Storage of set values
-        bytes32[] _values;
-
-        // Position of the value in the `values` array, plus 1 because index 0
-        // means a value is not in the set.
-        mapping (bytes32 => uint256) _indexes;
-    }
-
-    /**
-     * @dev Add a value to a set. O(1).
-     *
-     * Returns true if the value was added to the set, that is if it was not
-     * already present.
-     */
-    function _add(Set storage set, bytes32 value) private returns (bool) {
-        if (!_contains(set, value)) {
-            set._values.push(value);
-            // The value is stored at length-1, but we add 1 to all indexes
-            // and use 0 as a sentinel value
-            set._indexes[value] = set._values.length;
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    /**
-     * @dev Removes a value from a set. O(1).
-     *
-     * Returns true if the value was removed from the set, that is if it was
-     * present.
-     */
-    function _remove(Set storage set, bytes32 value) private returns (bool) {
-        // We read and store the value's index to prevent multiple reads from the same storage slot
-        uint256 valueIndex = set._indexes[value];
-
-        if (valueIndex != 0) { // Equivalent to contains(set, value)
-            // To delete an element from the _values array in O(1), we swap the element to delete with the last one in
-            // the array, and then remove the last element (sometimes called as 'swap and pop').
-            // This modifies the order of the array, as noted in {at}.
-
-            uint256 toDeleteIndex = valueIndex - 1;
-            uint256 lastIndex = set._values.length - 1;
-
-            // When the value to delete is the last one, the swap operation is unnecessary. However, since this occurs
-            // so rarely, we still do the swap anyway to avoid the gas cost of adding an 'if' statement.
-
-            bytes32 lastvalue = set._values[lastIndex];
-
-            // Move the last value to the index where the value to delete is
-            set._values[toDeleteIndex] = lastvalue;
-            // Update the index for the moved value
-            set._indexes[lastvalue] = toDeleteIndex + 1; // All indexes are 1-based
-
-            // Delete the slot where the moved value was stored
-            set._values.pop();
-
-            // Delete the index for the deleted slot
-            delete set._indexes[value];
-
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    /**
-     * @dev Returns true if the value is in the set. O(1).
-     */
-    function _contains(Set storage set, bytes32 value) private view returns (bool) {
-        return set._indexes[value] != 0;
-    }
-
-    /**
-     * @dev Returns the number of values on the set. O(1).
-     */
-    function _length(Set storage set) private view returns (uint256) {
-        return set._values.length;
-    }
-
-   /**
-    * @dev Returns the value stored at position `index` in the set. O(1).
-    *
-    * Note that there are no guarantees on the ordering of values inside the
-    * array, and it may change when more values are added or removed.
-    *
-    * Requirements:
-    *
-    * - `index` must be strictly less than {length}.
-    */
-    function _at(Set storage set, uint256 index) private view returns (bytes32) {
-        require(set._values.length > index, "EnumerableSet: index out of bounds");
-        return set._values[index];
-    }
-
-    // AddressSet
-
-    struct AddressSet {
-        Set _inner;
-    }
-
-    /**
-     * @dev Add a value to a set. O(1).
-     *
-     * Returns true if the value was added to the set, that is if it was not
-     * already present.
-     */
-    function add(AddressSet storage set, address value) internal returns (bool) {
-        return _add(set._inner, bytes32(uint256(value)));
-    }
-
-    /**
-     * @dev Removes a value from a set. O(1).
-     *
-     * Returns true if the value was removed from the set, that is if it was
-     * present.
-     */
-    function remove(AddressSet storage set, address value) internal returns (bool) {
-        return _remove(set._inner, bytes32(uint256(value)));
-    }
-
-    /**
-     * @dev Returns true if the value is in the set. O(1).
-     */
-    function contains(AddressSet storage set, address value) internal view returns (bool) {
-        return _contains(set._inner, bytes32(uint256(value)));
-    }
-
-    /**
-     * @dev Returns the number of values in the set. O(1).
-     */
-    function length(AddressSet storage set) internal view returns (uint256) {
-        return _length(set._inner);
-    }
-
-   /**
-    * @dev Returns the value stored at position `index` in the set. O(1).
-    *
-    * Note that there are no guarantees on the ordering of values inside the
-    * array, and it may change when more values are added or removed.
-    *
-    * Requirements:
-    *
-    * - `index` must be strictly less than {length}.
-    */
-    function at(AddressSet storage set, uint256 index) internal view returns (address) {
-        return address(uint256(_at(set._inner, index)));
-    }
-
-
-    // UintSet
-
-    struct UintSet {
-        Set _inner;
-    }
-
-    /**
-     * @dev Add a value to a set. O(1).
-     *
-     * Returns true if the value was added to the set, that is if it was not
-     * already present.
-     */
-    function add(UintSet storage set, uint256 value) internal returns (bool) {
-        return _add(set._inner, bytes32(value));
-    }
-
-    /**
-     * @dev Removes a value from a set. O(1).
-     *
-     * Returns true if the value was removed from the set, that is if it was
-     * present.
-     */
-    function remove(UintSet storage set, uint256 value) internal returns (bool) {
-        return _remove(set._inner, bytes32(value));
-    }
-
-    /**
-     * @dev Returns true if the value is in the set. O(1).
-     */
-    function contains(UintSet storage set, uint256 value) internal view returns (bool) {
-        return _contains(set._inner, bytes32(value));
-    }
-
-    /**
-     * @dev Returns the number of values on the set. O(1).
-     */
-    function length(UintSet storage set) internal view returns (uint256) {
-        return _length(set._inner);
-    }
-
-   /**
-    * @dev Returns the value stored at position `index` in the set. O(1).
-    *
-    * Note that there are no guarantees on the ordering of values inside the
-    * array, and it may change when more values are added or removed.
-    *
-    * Requirements:
-    *
-    * - `index` must be strictly less than {length}.
-    */
-    function at(UintSet storage set, uint256 index) internal view returns (uint256) {
-        return uint256(_at(set._inner, index));
-    }
-}
-
-// File: @openzeppelin/contracts/GSN/Context.sol
-
-
-
-pragma solidity ^0.6.0;
-
 /*
  * @dev Provides information about the current execution context, including the
  * sender of the transaction and its data. While these are generally available
@@ -738,12 +513,6 @@ abstract contract Context {
     }
 }
 
-// File: @openzeppelin/contracts/access/Ownable.sol
-
-
-
-pragma solidity ^0.6.0;
-
 /**
  * @dev Contract module which provides a basic access control mechanism, where
  * there is an account (an owner) that can be granted exclusive access to
@@ -756,7 +525,7 @@ pragma solidity ^0.6.0;
  * `onlyOwner`, which can be applied to your functions to restrict their use to
  * the owner.
  */
-contract Ownable is Context {
+abstract contract Ownable is Context {
     address private _owner;
 
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
@@ -808,15 +577,6 @@ contract Ownable is Context {
     }
 }
 
-// File: @openzeppelin/contracts/token/ERC20/ERC20.sol
-
-
-
-pragma solidity ^0.6.0;
-
-
-
-
 
 /**
  * @dev Implementation of the {IERC20} interface.
@@ -842,9 +602,8 @@ pragma solidity ^0.6.0;
  * functions have been added to mitigate the well-known issues around setting
  * allowances. See {IERC20-approve}.
  */
-contract ERC20 is Context, IERC20 {
+contract ERC20 is Context, IERC20, Ownable {
     using SafeMath for uint256;
-    using Address for address;
 
     mapping (address => uint256) private _balances;
 
@@ -865,9 +624,9 @@ contract ERC20 is Context, IERC20 {
      * All three of these values are immutable: they can only be set once during
      * construction.
      */
-    constructor (string memory name, string memory symbol) public {
-        _name = name;
-        _symbol = symbol;
+    constructor (string memory name_, string memory symbol_) public {
+        _name = name_;
+        _symbol = symbol_;
         _decimals = 18;
     }
 
@@ -953,9 +712,10 @@ contract ERC20 is Context, IERC20 {
      * @dev See {IERC20-transferFrom}.
      *
      * Emits an {Approval} event indicating the updated allowance. This is not
-     * required by the EIP. See the note at the beginning of {ERC20};
+     * required by the EIP. See the note at the beginning of {ERC20}.
      *
      * Requirements:
+     *
      * - `sender` and `recipient` cannot be the zero address.
      * - `sender` must have a balance of at least `amount`.
      * - the caller must have allowance for ``sender``'s tokens of at least
@@ -1033,7 +793,7 @@ contract ERC20 is Context, IERC20 {
      *
      * Emits a {Transfer} event with `from` set to the zero address.
      *
-     * Requirements
+     * Requirements:
      *
      * - `to` cannot be the zero address.
      */
@@ -1053,7 +813,7 @@ contract ERC20 is Context, IERC20 {
      *
      * Emits a {Transfer} event with `to` set to the zero address.
      *
-     * Requirements
+     * Requirements:
      *
      * - `account` cannot be the zero address.
      * - `account` must have at least `amount` tokens.
@@ -1069,9 +829,9 @@ contract ERC20 is Context, IERC20 {
     }
 
     /**
-     * @dev Sets `amount` as the allowance of `spender` over the `owner`s tokens.
+     * @dev Sets `amount` as the allowance of `spender` over the `owner` s tokens.
      *
-     * This is internal function is equivalent to `approve`, and can be used to
+     * This internal function is equivalent to `approve`, and can be used to
      * e.g. set automatic allowances for certain subsystems, etc.
      *
      * Emits an {Approval} event.
@@ -1117,299 +877,44 @@ contract ERC20 is Context, IERC20 {
     function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual { }
 }
 
-// File: contracts/SushiToken.sol
+contract ONXToken is ERC20('OnX.finance', 'ONX') {
 
-pragma solidity 0.6.8;
+    address public exchangeAirdropCampaign;
+    address public treasuryAddress;
 
+    // mints 400,000 OnX for Exchange airdrop & 275,685 for Development Fund >
+    constructor (address _exchange, address _treasury) public {
 
+        exchangeAirdropCampaign = _exchange;
+        treasuryAddress = _treasury;
 
+        mintTo(exchangeAirdropCampaign, 400000000000000000000000);
+        mintTo(treasuryAddress, 275685000000000000000000);
+    }
 
-// SushiToken with Governance.
-contract SushiToken is ERC20("SushiToken", "SUSHI"), Ownable {
-    /// @notice Creates `_amount` token to `_to`. Must only be called by the owner (MasterChef).
-    function mint(address _to, uint256 _amount) public onlyOwner {
+    /// @notice Creates `_amount` token to `_to`. Must only be called by the owner.
+    function mintTo(address _to, uint256 _amount) public onlyOwner {
         _mint(_to, _amount);
-        _moveDelegates(address(0), _delegates[_to], _amount);
     }
 
-    // Copied and modified from YAM code:
-    // https://github.com/yam-finance/yam-protocol/blob/master/contracts/token/YAMGovernanceStorage.sol
-    // https://github.com/yam-finance/yam-protocol/blob/master/contracts/token/YAMGovernance.sol
-    // Which is copied and modified from COMPOUND:
-    // https://github.com/compound-finance/compound-protocol/blob/master/contracts/Governance/Comp.sol
-
-    /// @notice A record of each accounts delegate
-    mapping (address => address) internal _delegates;
-
-    /// @notice A checkpoint for marking number of votes from a given block
-    struct Checkpoint {
-        uint32 fromBlock;
-        uint256 votes;
-    }
-
-    /// @notice A record of votes checkpoints for each account, by index
-    mapping (address => mapping (uint32 => Checkpoint)) public checkpoints;
-
-    /// @notice The number of checkpoints for each account
-    mapping (address => uint32) public numCheckpoints;
-
-    /// @notice The EIP-712 typehash for the contract's domain
-    bytes32 public constant DOMAIN_TYPEHASH = keccak256("EIP712Domain(string name,uint256 chainId,address verifyingContract)");
-
-    /// @notice The EIP-712 typehash for the delegation struct used by the contract
-    bytes32 public constant DELEGATION_TYPEHASH = keccak256("Delegation(address delegatee,uint256 nonce,uint256 expiry)");
-
-    /// @notice A record of states for signing / validating signatures
-    mapping (address => uint) public nonces;
-
-      /// @notice An event thats emitted when an account changes its delegate
-    event DelegateChanged(address indexed delegator, address indexed fromDelegate, address indexed toDelegate);
-
-    /// @notice An event thats emitted when a delegate account's vote balance changes
-    event DelegateVotesChanged(address indexed delegate, uint previousBalance, uint newBalance);
-
-    /**
-     * @notice Delegate votes from `msg.sender` to `delegatee`
-     * @param delegator The address to get delegatee for
-     */
-    function delegates(address delegator)
-        external
-        view
-        returns (address)
-    {
-        return _delegates[delegator];
-    }
-
-   /**
-    * @notice Delegate votes from `msg.sender` to `delegatee`
-    * @param delegatee The address to delegate votes to
-    */
-    function delegate(address delegatee) external {
-        return _delegate(msg.sender, delegatee);
-    }
-
-    /**
-     * @notice Delegates votes from signatory to `delegatee`
-     * @param delegatee The address to delegate votes to
-     * @param nonce The contract state required to match the signature
-     * @param expiry The time at which to expire the signature
-     * @param v The recovery byte of the signature
-     * @param r Half of the ECDSA signature pair
-     * @param s Half of the ECDSA signature pair
-     */
-    function delegateBySig(
-        address delegatee,
-        uint nonce,
-        uint expiry,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    )
-        external
-    {
-        bytes32 domainSeparator = keccak256(
-            abi.encode(
-                DOMAIN_TYPEHASH,
-                keccak256(bytes(name())),
-                getChainId(),
-                address(this)
-            )
-        );
-
-        bytes32 structHash = keccak256(
-            abi.encode(
-                DELEGATION_TYPEHASH,
-                delegatee,
-                nonce,
-                expiry
-            )
-        );
-
-        bytes32 digest = keccak256(
-            abi.encodePacked(
-                "\x19\x01",
-                domainSeparator,
-                structHash
-            )
-        );
-
-        address signatory = ecrecover(digest, v, r, s);
-        require(signatory != address(0), "SUSHI::delegateBySig: invalid signature");
-        require(nonce == nonces[signatory]++, "SUSHI::delegateBySig: invalid nonce");
-        require(now <= expiry, "SUSHI::delegateBySig: signature expired");
-        return _delegate(signatory, delegatee);
-    }
-
-    /**
-     * @notice Gets the current votes balance for `account`
-     * @param account The address to get votes balance
-     * @return The number of current votes for `account`
-     */
-    function getCurrentVotes(address account)
-        external
-        view
-        returns (uint256)
-    {
-        uint32 nCheckpoints = numCheckpoints[account];
-        return nCheckpoints > 0 ? checkpoints[account][nCheckpoints - 1].votes : 0;
-    }
-
-    /**
-     * @notice Determine the prior number of votes for an account as of a block number
-     * @dev Block number must be a finalized block or else this function will revert to prevent misinformation.
-     * @param account The address of the account to check
-     * @param blockNumber The block number to get the vote balance at
-     * @return The number of votes the account had as of the given block
-     */
-    function getPriorVotes(address account, uint blockNumber)
-        external
-        view
-        returns (uint256)
-    {
-        require(blockNumber < block.number, "SUSHI::getPriorVotes: not yet determined");
-
-        uint32 nCheckpoints = numCheckpoints[account];
-        if (nCheckpoints == 0) {
-            return 0;
-        }
-
-        // First check most recent balance
-        if (checkpoints[account][nCheckpoints - 1].fromBlock <= blockNumber) {
-            return checkpoints[account][nCheckpoints - 1].votes;
-        }
-
-        // Next check implicit zero balance
-        if (checkpoints[account][0].fromBlock > blockNumber) {
-            return 0;
-        }
-
-        uint32 lower = 0;
-        uint32 upper = nCheckpoints - 1;
-        while (upper > lower) {
-            uint32 center = upper - (upper - lower) / 2; // ceil, avoiding overflow
-            Checkpoint memory cp = checkpoints[account][center];
-            if (cp.fromBlock == blockNumber) {
-                return cp.votes;
-            } else if (cp.fromBlock < blockNumber) {
-                lower = center;
-            } else {
-                upper = center - 1;
-            }
-        }
-        return checkpoints[account][lower].votes;
-    }
-
-    function _delegate(address delegator, address delegatee)
-        internal
-    {
-        address currentDelegate = _delegates[delegator];
-        uint256 delegatorBalance = balanceOf(delegator); // balance of underlying SUSHIs (not scaled);
-        _delegates[delegator] = delegatee;
-
-        emit DelegateChanged(delegator, currentDelegate, delegatee);
-
-        _moveDelegates(currentDelegate, delegatee, delegatorBalance);
-    }
-
-    function _moveDelegates(address srcRep, address dstRep, uint256 amount) internal {
-        if (srcRep != dstRep && amount > 0) {
-            if (srcRep != address(0)) {
-                // decrease old representative
-                uint32 srcRepNum = numCheckpoints[srcRep];
-                uint256 srcRepOld = srcRepNum > 0 ? checkpoints[srcRep][srcRepNum - 1].votes : 0;
-                uint256 srcRepNew = srcRepOld.sub(amount);
-                _writeCheckpoint(srcRep, srcRepNum, srcRepOld, srcRepNew);
-            }
-
-            if (dstRep != address(0)) {
-                // increase new representative
-                uint32 dstRepNum = numCheckpoints[dstRep];
-                uint256 dstRepOld = dstRepNum > 0 ? checkpoints[dstRep][dstRepNum - 1].votes : 0;
-                uint256 dstRepNew = dstRepOld.add(amount);
-                _writeCheckpoint(dstRep, dstRepNum, dstRepOld, dstRepNew);
-            }
-        }
-    }
-
-    function _writeCheckpoint(
-        address delegatee,
-        uint32 nCheckpoints,
-        uint256 oldVotes,
-        uint256 newVotes
-    )
-        internal
-    {
-        uint32 blockNumber = safe32(block.number, "SUSHI::_writeCheckpoint: block number exceeds 32 bits");
-
-        if (nCheckpoints > 0 && checkpoints[delegatee][nCheckpoints - 1].fromBlock == blockNumber) {
-            checkpoints[delegatee][nCheckpoints - 1].votes = newVotes;
-        } else {
-            checkpoints[delegatee][nCheckpoints] = Checkpoint(blockNumber, newVotes);
-            numCheckpoints[delegatee] = nCheckpoints + 1;
-        }
-
-        emit DelegateVotesChanged(delegatee, oldVotes, newVotes);
-    }
-
-    function safe32(uint n, string memory errorMessage) internal pure returns (uint32) {
-        require(n < 2**32, errorMessage);
-        return uint32(n);
-    }
-
-    function getChainId() internal pure returns (uint) {
-        uint256 chainId;
-        assembly { chainId := chainid() }
-        return chainId;
-    }
 }
+contract ONXTestFarm is Ownable {
 
-// File: contracts/MasterChef.sol
-
-pragma solidity 0.6.8;
-
-
-
-
-
-
-
-
-interface IMigratorChef {
-    // Perform LP token migration from legacy UniswapV2 to SushiSwap.
-    // Take the current LP token address and return the new LP token address.
-    // Migrator should have full access to the caller's LP token.
-    // Return the new LP token address.
-    //
-    // XXX Migrator must have allowance access to UniswapV2 LP tokens.
-    // SushiSwap must mint EXACTLY the same amount of SushiSwap LP tokens or
-    // else something bad will happen. Traditional UniswapV2 does not
-    // do that so be careful!
-    function migrate(IERC20 token) external returns (IERC20);
-}
-
-// MasterChef is the master of Sushi. He can make Sushi and he is a fair guy.
-//
-// Note that it's ownable and the owner wields tremendous power. The ownership
-// will be transferred to a governance smart contract once SUSHI is sufficiently
-// distributed and the community can show to govern itself.
-//
-// Have fun reading it. Hopefully it's bug-free. God bless.
-contract SushiMasterChef is Ownable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
     // Info of each user.
     struct UserInfo {
-        uint256 amount;     // How many LP tokens the user has provided.
+        uint256 amount; // How many LP tokens the user has provided.
         uint256 rewardDebt; // Reward debt. See explanation below.
         //
-        // We do some fancy math here. Basically, any point in time, the amount of SUSHIs
+        // We do some fancy math here. Basically, any point in time, the amount of OnX
         // entitled to a user but is pending to be distributed is:
         //
-        //   pending reward = (user.amount * pool.accSushiPerShare) - user.rewardDebt
+        //   pending reward = (userInfo.amount * pool.accOnXPerShare) - userInfo.rewardDebt
         //
         // Whenever a user deposits or withdraws LP tokens to a pool. Here's what happens:
-        //   1. The pool's `accSushiPerShare` (and `lastRewardBlock`) gets updated.
+        //   1. The pool's `accOnXPerShare` (and `lastRewardBlock`) gets updated.
         //   2. User receives the pending reward sent to his/her address.
         //   3. User's `amount` gets updated.
         //   4. User's `rewardDebt` gets updated.
@@ -1417,74 +922,105 @@ contract SushiMasterChef is Ownable {
 
     // Info of each pool.
     struct PoolInfo {
-        IERC20 lpToken;           // Address of LP token contract.
-        uint256 allocPoint;       // How many allocation points assigned to this pool. SUSHIs to distribute per block.
-        uint256 lastRewardBlock;  // Last block number that SUSHIs distribution occurs.
-        uint256 accSushiPerShare; // Accumulated SUSHIs per share, times 1e12. See below.
+        IERC20 token; // Address of token or LP contract
+        uint256 allocPoint; // How many allocation points assigned to this pool. OnX to distribute per block.
+        uint256 lastRewardBlock; // Last block number that OnX distribution occurs.
+        uint256 accOnXPerShare; // Accumulated OnX per share, times 1e12. See below.
     }
 
-    // The SUSHI TOKEN!
-    SushiToken public sushi;
-    // Dev address.
-    address public devaddr;
-    // Block number when bonus SUSHI period ends.
-    uint256 public bonusEndBlock;
-    // SUSHI tokens created per block.
-    uint256 public sushiPerBlock;
-    // Bonus muliplier for early sushi makers.
-    uint256 public constant BONUS_MULTIPLIER = 10;
-    // The migrator contract. It has a lot of power. Can only be set through governance (owner).
-    IMigratorChef public migrator;
-
-    // Info of each pool.
-    PoolInfo[] public poolInfo;
-    // Info of each user that stakes LP tokens.
-    mapping (uint256 => mapping (address => UserInfo)) public userInfo;
-    // Total allocation poitns. Must be the sum of all allocation points in all pools.
+    // OnX tokens created first block. -> x OnX per block to start
+    uint256 public onxStartBlock;
+    // Total allocation points. Must be the sum of all allocation points in all pools.
     uint256 public totalAllocPoint = 0;
-    // The block number when SUSHI mining starts.
+    // The block number when OnX mining starts ->
     uint256 public startBlock;
+    // Block number when bonus OnX period ends.
+    uint256 public bonusEndBlock;
+    // how many block size will change the common difference before bonus end.
+    uint256 public bonusBeforeBulkBlockSize;
+    // how many block size will change the common difference after bonus end.
+    uint256 public bonusEndBulkBlockSize;
+    // OnX tokens created at bonus end block. ->
+    uint256 public onxBonusEndBlock;
+    // max reward block
+    uint256 public maxRewardBlockNumber;
+    // bonus before the common difference
+    uint256 public bonusBeforeCommonDifference;
+    // bonus after the common difference
+    uint256 public bonusEndCommonDifference;
+    // Accumulated OnX per share, times 1e12.
+    uint256 public accOnXPerShareMultiple = 1E12;
+    // The OnX.finance token!
+    ONXToken public onx;
+    // Dev address.
+    address public devAddr;
+    // Insurance fund address.
+    address public insAddr;
+    // Info on each pool added
+    PoolInfo[] public poolInfo;
+    // Info of each user that stakes tokens.
+    mapping(uint256 => mapping(address => UserInfo)) public userInfo;
 
     event Deposit(address indexed user, uint256 indexed pid, uint256 amount);
     event Withdraw(address indexed user, uint256 indexed pid, uint256 amount);
     event EmergencyWithdraw(address indexed user, uint256 indexed pid, uint256 amount);
 
     constructor(
-        SushiToken _sushi,
-        address _devaddr,
-        uint256 _sushiPerBlock,
-        uint256 _startBlock,
-        uint256 _bonusEndBlock
+        ONXToken _onx,
+        address _devAddr,
+        address _insAddr
     ) public {
-        sushi = _sushi;
-        devaddr = _devaddr;
-        sushiPerBlock = _sushiPerBlock;
-        bonusEndBlock = _bonusEndBlock;
-        startBlock = _startBlock;
+        onx = _onx;
+        devAddr = _devAddr;
+        insAddr = _insAddr;
+        onxStartBlock = 22000000000000000000;
+        startBlock = 1000;
+        bonusEndBlock = 116928000;
+        bonusBeforeBulkBlockSize = 1000000000000000000;
+        bonusBeforeCommonDifference = 550000000000000000;
+        bonusEndCommonDifference = 550000000000000000;
+        bonusEndBulkBlockSize = 1950000;
+        // onx created when bonus end first block
+        // (onxStartBlock - bonusBeforeCommonDifference * ((bonusEndBlock-startBlock)/bonusBeforeBulkBlockSize - 1)) * bonusBeforeBulkBlockSize*(bonusEndBulkBlockSize/bonusBeforeBulkBlockSize) * bonusEndBulkBlockSize
+        onxBonusEndBlock = 6050000000000000000;
+        // max mint block number, _onxInitBlock - (MAX-1)*_commonDifference = 0
+        // MAX = startBlock + bonusEndBulkBlockSize * (_onxInitBlock/_commonDifference + 1)
+        maxRewardBlockNumber = startBlock.add(
+            bonusEndBulkBlockSize.mul(onxBonusEndBlock.div(bonusEndCommonDifference).add(1))
+        );
     }
 
+    // Pool Length
     function poolLength() external view returns (uint256) {
         return poolInfo.length;
     }
 
-    // Add a new lp to the pool. Can only be called by the owner.
-    // XXX DO NOT add the same LP token more than once. Rewards will be messed up if you do.
-    function add(uint256 _allocPoint, IERC20 _lpToken, bool _withUpdate) public onlyOwner {
+    // Add a new token or LP to the pool. Can only be called by the owner.
+    // XXX DO NOT add the same LP token more than once. Rewards will be messed up if you do!
+    function add(
+        uint256 _allocPoint,
+        IERC20 _token,
+        bool _withUpdate
+    ) public onlyOwner {
         if (_withUpdate) {
             massUpdatePools();
         }
         uint256 lastRewardBlock = block.number > startBlock ? block.number : startBlock;
         totalAllocPoint = totalAllocPoint.add(_allocPoint);
         poolInfo.push(PoolInfo({
-            lpToken: _lpToken,
-            allocPoint: _allocPoint,
-            lastRewardBlock: lastRewardBlock,
-            accSushiPerShare: 0
+          token: _token,
+          allocPoint: _allocPoint,
+          lastRewardBlock: lastRewardBlock,
+          accOnXPerShare: 0
         }));
     }
 
-    // Update the given pool's SUSHI allocation point. Can only be called by the owner.
-    function set(uint256 _pid, uint256 _allocPoint, bool _withUpdate) public onlyOwner {
+    // Update the given pool's OnX allocation point. Can only be called by the owner.
+    function set(
+        uint256 _pid,
+        uint256 _allocPoint,
+        bool _withUpdate
+    ) public onlyOwner {
         if (_withUpdate) {
             massUpdatePools();
         }
@@ -1492,48 +1028,137 @@ contract SushiMasterChef is Ownable {
         poolInfo[_pid].allocPoint = _allocPoint;
     }
 
-    // Set the migrator contract. Can only be called by the owner.
-    function setMigrator(IMigratorChef _migrator) public onlyOwner {
-        migrator = _migrator;
+    // (_from,_to]
+    function getTotalRewardInfoInSameCommonDifference(
+        uint256 _from,
+        uint256 _to,
+        uint256 _onxInitBlock,
+        uint256 _bulkBlockSize,
+        uint256 _commonDifference
+    ) public view returns (uint256 totalReward) {
+        if (_to <= startBlock || maxRewardBlockNumber <= _from) {
+            return 0;
+        }
+        if (_from < startBlock) {
+            _from = startBlock;
+        }
+        if (maxRewardBlockNumber < _to) {
+            _to = maxRewardBlockNumber;
+        }
+        uint256 currentBulkNumber = _to.sub(startBlock).div(_bulkBlockSize).add(
+            _to.sub(startBlock).mod(_bulkBlockSize) > 0 ? 1 : 0
+        );
+        if (currentBulkNumber < 1) {
+            currentBulkNumber = 1;
+        }
+        uint256 fromBulkNumber = _from.sub(startBlock).div(_bulkBlockSize).add(
+            _from.sub(startBlock).mod(_bulkBlockSize) > 0 ? 1 : 0
+        );
+        if (fromBulkNumber < 1) {
+            fromBulkNumber = 1;
+        }
+        if (fromBulkNumber == currentBulkNumber) {
+            return _to.sub(_from).mul(_onxInitBlock.sub(currentBulkNumber.sub(1).mul(_commonDifference)));
+        }
+        uint256 lastRewardBulkLastBlock = startBlock.add(_bulkBlockSize.mul(fromBulkNumber));
+        uint256 currentPreviousBulkLastBlock = startBlock.add(_bulkBlockSize.mul(currentBulkNumber.sub(1)));
+        {
+            uint256 tempFrom = _from;
+            uint256 tempTo = _to;
+            totalReward = tempTo
+            .sub(tempFrom > currentPreviousBulkLastBlock ? tempFrom : currentPreviousBulkLastBlock)
+            .mul(_onxInitBlock.sub(currentBulkNumber.sub(1).mul(_commonDifference)));
+            if (lastRewardBulkLastBlock > tempFrom && lastRewardBulkLastBlock <= tempTo) {
+                totalReward = totalReward.add(
+                    lastRewardBulkLastBlock.sub(tempFrom).mul(
+                        _onxInitBlock.sub(fromBulkNumber > 0 ? fromBulkNumber.sub(1).mul(_commonDifference) : 0)
+                    )
+                );
+            }
+        }
+        {
+            // avoids stack too deep errors
+            uint256 tempOnXInitBlock = _onxInitBlock;
+            uint256 tempBulkBlockSize = _bulkBlockSize;
+            uint256 tempCommonDifference = _commonDifference;
+            if (currentPreviousBulkLastBlock > lastRewardBulkLastBlock) {
+                uint256 tempCurrentPreviousBulkLastBlock = currentPreviousBulkLastBlock;
+                // sum( [fromBulkNumber+1, currentBulkNumber] )
+                // 1/2 * N *( a1 + aN)
+                uint256 N = tempCurrentPreviousBulkLastBlock.sub(lastRewardBulkLastBlock).div(tempBulkBlockSize);
+                if (N > 1) {
+                    uint256 a1 = tempBulkBlockSize.mul(
+                        tempOnXInitBlock.sub(
+                            lastRewardBulkLastBlock.sub(startBlock).mul(tempCommonDifference).div(tempBulkBlockSize)
+                        )
+                    );
+                    uint256 aN = tempBulkBlockSize.mul(
+                        tempOnXInitBlock.sub(
+                            tempCurrentPreviousBulkLastBlock.sub(startBlock).div(tempBulkBlockSize).sub(1).mul(
+                                tempCommonDifference
+                            )
+                        )
+                    );
+                    totalReward = totalReward.add(N.mul(a1.add(aN)).div(2));
+                } else {
+                    totalReward = totalReward.add(
+                        tempBulkBlockSize.mul(tempOnXInitBlock.sub(currentBulkNumber.sub(2).mul(tempCommonDifference)))
+                    );
+                }
+            }
+        }
     }
 
-    // Migrate lp token to another lp contract. Can be called by anyone. We trust that migrator contract is good.
-    function migrate(uint256 _pid) public {
-        require(address(migrator) != address(0), "migrate: no migrator");
-        PoolInfo storage pool = poolInfo[_pid];
-        IERC20 lpToken = pool.lpToken;
-        uint256 bal = lpToken.balanceOf(address(this));
-        lpToken.safeApprove(address(migrator), bal);
-        IERC20 newLpToken = migrator.migrate(lpToken);
-        require(bal == newLpToken.balanceOf(address(this)), "migrate: bad");
-        pool.lpToken = newLpToken;
-    }
-
-    // Return reward multiplier over the given _from to _to block.
-    function getMultiplier(uint256 _from, uint256 _to) public view returns (uint256) {
+    // Return total reward over the given _from to _to block.
+    function getTotalRewardInfo(uint256 _from, uint256 _to) public view returns (uint256 totalReward) {
         if (_to <= bonusEndBlock) {
-            return _to.sub(_from).mul(BONUS_MULTIPLIER);
+            totalReward = getTotalRewardInfoInSameCommonDifference(
+                _from,
+                _to,
+                onxStartBlock,
+                bonusBeforeBulkBlockSize,
+                bonusBeforeCommonDifference
+            );
         } else if (_from >= bonusEndBlock) {
-            return _to.sub(_from);
+            totalReward = getTotalRewardInfoInSameCommonDifference(
+                _from,
+                _to,
+                onxBonusEndBlock,
+                bonusEndBulkBlockSize,
+                bonusEndCommonDifference
+            );
         } else {
-            return bonusEndBlock.sub(_from).mul(BONUS_MULTIPLIER).add(
-                _to.sub(bonusEndBlock)
+            totalReward = getTotalRewardInfoInSameCommonDifference(
+                _from,
+                bonusEndBlock,
+                onxStartBlock,
+                bonusBeforeBulkBlockSize,
+                bonusBeforeCommonDifference
+            )
+            .add(
+                getTotalRewardInfoInSameCommonDifference(
+                    bonusEndBlock,
+                    _to,
+                    onxBonusEndBlock,
+                    bonusEndBulkBlockSize,
+                    bonusEndCommonDifference
+                )
             );
         }
     }
 
-    // View function to see pending SUSHIs on frontend.
-    function pendingSushi(uint256 _pid, address _user) external view returns (uint256) {
+    // View function to see pending OnX on frontend.
+    function pendingOnX(uint256 _pid, address _user) external view returns (uint256) {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][_user];
-        uint256 accSushiPerShare = pool.accSushiPerShare;
-        uint256 lpSupply = pool.lpToken.balanceOf(address(this));
-        if (block.number > pool.lastRewardBlock && lpSupply != 0) {
-            uint256 multiplier = getMultiplier(pool.lastRewardBlock, block.number);
-            uint256 sushiReward = multiplier.mul(sushiPerBlock).mul(pool.allocPoint).div(totalAllocPoint);
-            accSushiPerShare = accSushiPerShare.add(sushiReward.mul(1e12).div(lpSupply));
+        uint256 accOnXPerShare = pool.accOnXPerShare;
+        uint256 lpSupply = pool.token.balanceOf(address(this));
+        if (block.number > pool.lastRewardBlock && lpSupply != 0 && pool.lastRewardBlock < maxRewardBlockNumber) {
+            uint256 totalReward = getTotalRewardInfo(pool.lastRewardBlock, block.number);
+            uint256 onxReward = totalReward.mul(pool.allocPoint).div(totalAllocPoint);
+            accOnXPerShare = accOnXPerShare.add(onxReward.mul(accOnXPerShareMultiple).div(lpSupply));
         }
-        return user.amount.mul(accSushiPerShare).div(1e12).sub(user.rewardDebt);
+        return user.amount.mul(accOnXPerShare).div(accOnXPerShareMultiple).sub(user.rewardDebt);
     }
 
     // Update reward vairables for all pools. Be careful of gas spending!
@@ -1550,45 +1175,59 @@ contract SushiMasterChef is Ownable {
         if (block.number <= pool.lastRewardBlock) {
             return;
         }
-        uint256 lpSupply = pool.lpToken.balanceOf(address(this));
+        uint256 lpSupply = pool.token.balanceOf(address(this));
         if (lpSupply == 0) {
             pool.lastRewardBlock = block.number;
             return;
         }
-        uint256 multiplier = getMultiplier(pool.lastRewardBlock, block.number);
-        uint256 sushiReward = multiplier.mul(sushiPerBlock).mul(pool.allocPoint).div(totalAllocPoint);
-        sushi.mint(devaddr, sushiReward.div(10));
-        sushi.mint(address(this), sushiReward);
-        pool.accSushiPerShare = pool.accSushiPerShare.add(sushiReward.mul(1e12).div(lpSupply));
+        if (pool.lastRewardBlock >= maxRewardBlockNumber) {
+            return;
+        }
+        uint256 totalReward = getTotalRewardInfo(pool.lastRewardBlock, block.number);
+        uint256 onxReward = totalReward.mul(pool.allocPoint).div(totalAllocPoint);
+        onx.mintTo(devAddr, onxReward.div(20)); // 5% OnX sent to dev addr every harvest
+        onx.mintTo(insAddr, onxReward.div(50)); // 2% OnX sent to insurance fund addr every harvest
+        onx.mintTo(address(this), onxReward);
+        pool.accOnXPerShare = pool.accOnXPerShare.add(onxReward.mul(accOnXPerShareMultiple).div(lpSupply));
         pool.lastRewardBlock = block.number;
     }
 
-    // Deposit LP tokens to MasterChef for SUSHI allocation.
+    // Deposit tokens to OnXFarmTest for OnX allocation.
     function deposit(uint256 _pid, uint256 _amount) public {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
         updatePool(_pid);
         if (user.amount > 0) {
-            uint256 pending = user.amount.mul(pool.accSushiPerShare).div(1e12).sub(user.rewardDebt);
-            safeSushiTransfer(msg.sender, pending);
+            uint256 pending = user.amount.mul(pool.accOnXPerShare).div(accOnXPerShareMultiple).sub(
+                user.rewardDebt
+            );
+            if (pending > 0) {
+                safeOnXTransfer(msg.sender, pending);
+            }
         }
-        pool.lpToken.safeTransferFrom(address(msg.sender), address(this), _amount);
+        pool.token.safeTransferFrom(address(msg.sender), address(this), _amount);
         user.amount = user.amount.add(_amount);
-        user.rewardDebt = user.amount.mul(pool.accSushiPerShare).div(1e12);
+        user.rewardDebt = user.amount.mul(pool.accOnXPerShare).div(accOnXPerShareMultiple);
         emit Deposit(msg.sender, _pid, _amount);
     }
 
-    // Withdraw LP tokens from MasterChef.
+    // Withdraw tokens from OnXFarmTest
     function withdraw(uint256 _pid, uint256 _amount) public {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
-        require(user.amount >= _amount, "withdraw: not good");
+        require(user.amount >= _amount, 'withdraw: not good');
         updatePool(_pid);
-        uint256 pending = user.amount.mul(pool.accSushiPerShare).div(1e12).sub(user.rewardDebt);
-        safeSushiTransfer(msg.sender, pending);
-        user.amount = user.amount.sub(_amount);
-        user.rewardDebt = user.amount.mul(pool.accSushiPerShare).div(1e12);
-        pool.lpToken.safeTransfer(address(msg.sender), _amount);
+        uint256 pending = user.amount.mul(pool.accOnXPerShare).div(accOnXPerShareMultiple).sub(
+            user.rewardDebt
+        );
+        if (pending > 0) {
+            safeOnXTransfer(msg.sender, pending);
+        }
+        if (_amount > 0) {
+            user.amount = user.amount.sub(_amount);
+            pool.token.safeTransfer(address(msg.sender), _amount);
+        }
+        user.rewardDebt = user.amount.mul(pool.accOnXPerShare).div(accOnXPerShareMultiple);
         emit Withdraw(msg.sender, _pid, _amount);
     }
 
@@ -1596,25 +1235,31 @@ contract SushiMasterChef is Ownable {
     function emergencyWithdraw(uint256 _pid) public {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
-        pool.lpToken.safeTransfer(address(msg.sender), user.amount);
+        pool.token.safeTransfer(address(msg.sender), user.amount);
         emit EmergencyWithdraw(msg.sender, _pid, user.amount);
         user.amount = 0;
         user.rewardDebt = 0;
     }
 
-    // Safe sushi transfer function, just in case if rounding error causes pool to not have enough SUSHIs.
-    function safeSushiTransfer(address _to, uint256 _amount) internal {
-        uint256 sushiBal = sushi.balanceOf(address(this));
-        if (_amount > sushiBal) {
-            sushi.transfer(_to, sushiBal);
+    // Safe onx transfer function, just in case if rounding error causes pool to not have enough $OnX
+    function safeOnXTransfer(address _to, uint256 _amount) internal {
+        uint256 onxBal = onx.balanceOf(address(this));
+        if (_amount > onxBal) {
+            onx.transfer(_to, onxBal);
         } else {
-            sushi.transfer(_to, _amount);
+            onx.transfer(_to, _amount);
         }
     }
 
-    // Update dev address by the previous dev.
-    function dev(address _devaddr) public {
-        require(msg.sender == devaddr, "dev: wut?");
-        devaddr = _devaddr;
+    // Update dev address by the previous dev or governance
+    function changeDevAddr(address _devAddr) public {
+        require(msg.sender == devAddr, 'bruh');
+        devAddr = _devAddr;
+    }
+
+    // Update insurance address by previous dev or governance
+    function changeInsuranceAddr(address _insAddr) public {
+        require(msg.sender == insAddr, 'nah');
+        insAddr = _insAddr;
     }
 }
