@@ -14,21 +14,12 @@ interface IConfig {
 
 	function factory() external view returns (address);
 
-	function mint() external view returns (address);
-
 	function token() external view returns (address);
-
-	function share() external view returns (address);
-
-	function governor() external view returns (address);
 
 	function initialize(
 		address _platform,
 		address _factory,
-		address _mint,
-		address _token,
-		address _share,
-		address _governor
+		address _token
 	) external;
 
 	function initParameter() external;
@@ -38,18 +29,6 @@ interface IConfig {
 	function changeDeveloper(address _developer) external;
 
 	function setValue(bytes32 _key, uint256 _value) external;
-}
-
-interface IONXMint {
-	function sync() external;
-}
-
-interface IONXShare {
-	function setShareToken(address _shareToken) external;
-}
-
-interface IONXToken {
-	function initialize() external;
 }
 
 interface IONXFactory {
@@ -96,15 +75,6 @@ contract ONXDeploy {
 
 	function createPool(address _lendToken, address _collateralToken) public onlyOwner {
 		IONXFactory(IConfig(config).factory()).createPool(_lendToken, _collateralToken);
-	}
-
-	function changeMintPerBlock(uint256 _value) external onlyOwner {
-		IConfig(config).setValue(ConfigNames.MINT_AMOUNT_PER_BLOCK, _value);
-		IONXMint(IConfig(config).mint()).sync();
-	}
-
-	function setShareToken(address _shareToken) external onlyOwner {
-		IONXShare(IConfig(config).share()).setShareToken(_shareToken);
 	}
 
 	function updatePoolParameter(

@@ -5,14 +5,6 @@ import "./modules/ConfigNames.sol";
 import "./libraries/SafeMath.sol";
 import "./libraries/TransferHelper.sol";
 
-interface IONXMint {
-	function increaseProductivity(address user, uint256 value) external returns (bool);
-
-	function decreaseProductivity(address user, uint256 value) external returns (bool);
-
-	function getProductivity(address user) external view returns (uint256, uint256);
-}
-
 interface IWETH {
 	function deposit() external payable;
 
@@ -106,7 +98,6 @@ contract ONXPlatform is Configable {
 		require(pool != address(0), "POOL NOT EXIST");
 		TransferHelper.safeTransferFrom(_lendToken, msg.sender, pool, _amountDeposit);
 		IONXPool(pool).deposit(_amountDeposit, msg.sender);
-		_updateProdutivity(pool);
 	}
 
 	function depositETH(address _lendToken, address _collateralToken) external payable lock {
@@ -117,7 +108,6 @@ contract ONXPlatform is Configable {
 		IWETH(IConfig(config).WETH()).deposit{value: msg.value}();
 		TransferHelper.safeTransfer(_lendToken, pool, msg.value);
 		IONXPool(pool).deposit(msg.value, msg.sender);
-		_updateProdutivity(pool);
 	}
 
 	function withdraw(address _lendToken, address _collateralToken, uint256 _amountWithdraw) external lock {
@@ -128,7 +118,6 @@ contract ONXPlatform is Configable {
 			IONXPool(pool).withdraw(_amountWithdraw, msg.sender);
 		if (withdrawSupplyAmount > 0) _innerTransfer(_lendToken, msg.sender, withdrawSupplyAmount);
 		if (withdrawLiquidationAmount > 0) _innerTransfer(_collateralToken, msg.sender, withdrawLiquidationAmount);
-		_updateProdutivity(pool);
 	}
 
 	function borrow(address _lendToken, address _collateralToken, uint256 _amountCollateral, uint256 _expectBorrow) external lock {
@@ -143,7 +132,6 @@ contract ONXPlatform is Configable {
 		uint256 repayAmount = getRepayAmount(_lendToken, _collateralToken, borrowAmountCollateral, msg.sender);
 		IONXPool(pool).borrow(_amountCollateral, repayAmount, _expectBorrow, msg.sender);
 		if (_expectBorrow > 0) _innerTransfer(_lendToken, msg.sender, _expectBorrow);
-		_updateProdutivity(pool);
 	}
 
 	function borrowTokenWithETH(address _lendToken, address _collateralToken, uint256 _expectBorrow) external payable lock {
@@ -161,7 +149,6 @@ contract ONXPlatform is Configable {
 		uint256 repayAmount = getRepayAmount(_lendToken, _collateralToken, borrowAmountCollateral, msg.sender);
 		IONXPool(pool).borrow(msg.value, repayAmount, _expectBorrow, msg.sender);
 		if (_expectBorrow > 0) _innerTransfer(_lendToken, msg.sender, _expectBorrow);
-		_updateProdutivity(pool);
 	}
 
 	function repay(address _lendToken, address _collateralToken, uint256 _amountCollateral) external lock {
@@ -175,7 +162,6 @@ contract ONXPlatform is Configable {
 
 		IONXPool(pool).repay(_amountCollateral, msg.sender);
 		_innerTransfer(_collateralToken, msg.sender, _amountCollateral);
-		_updateProdutivity(pool);
 	}
 
 	function repayETH(address _lendToken, address _collateralToken, uint256 _amountCollateral) external payable lock {
@@ -194,7 +180,6 @@ contract ONXPlatform is Configable {
 		IONXPool(pool).repay(_amountCollateral, msg.sender);
 		_innerTransfer(_collateralToken, msg.sender, _amountCollateral);
 		if (msg.value > repayAmount) TransferHelper.safeTransferETH(msg.sender, msg.value.sub(repayAmount));
-		_updateProdutivity(pool);
 	}
 
 	function liquidation(address _lendToken, address _collateralToken, address _user) external lock {
@@ -202,7 +187,6 @@ contract ONXPlatform is Configable {
 		address pool = IONXFactory(IConfig(config).factory()).getPool(_lendToken, _collateralToken);
 		require(pool != address(0), "POOL NOT EXIST");
 		IONXPool(pool).liquidation(_user, msg.sender);
-		_updateProdutivity(pool);
 	}
 
 	function reinvest(address _lendToken, address _collateralToken) external lock {
@@ -210,7 +194,6 @@ contract ONXPlatform is Configable {
 		address pool = IONXFactory(IConfig(config).factory()).getPool(_lendToken, _collateralToken);
 		require(pool != address(0), "POOL NOT EXIST");
 		IONXPool(pool).reinvest(msg.sender);
-		_updateProdutivity(pool);
 	}
 
 	function _innerTransfer(
@@ -223,21 +206,6 @@ contract ONXPlatform is Configable {
 			TransferHelper.safeTransferETH(_to, _amount);
 		} else {
 			TransferHelper.safeTransfer(_token, _to, _amount);
-		}
-	}
-
-	function _updateProdutivity(address pool) internal {
-		uint256 power = IConfig(config).getPoolValue(pool, ConfigNames.POOL_MINT_POWER);
-		uint256 amount = IONXPool(pool).getTotalAmount().mul(power).div(10000);
-		(uint256 old, ) = IONXMint(IConfig(config).mint()).getProductivity(pool);
-		if (old > 0) {
-			IONXMint(IConfig(config).mint()).decreaseProductivity(pool, old);
-		}
-
-		address token = IONXPool(pool).supplyToken();
-		uint256 baseAmount = IConfig(config).convertTokenAmount(token, IConfig(config).base(), amount);
-		if (baseAmount > 0) {
-			IONXMint(IConfig(config).mint()).increaseProductivity(pool, baseAmount);
 		}
 	}
 
@@ -314,9 +282,7 @@ contract ONXPlatform is Configable {
 
 		uint256 _totalInterest = getInterestAmount(_lendToken, _collateralToken, from);
 		liquidationAmount = getLiquidationAmount(_lendToken, _collateralToken, from);
-		uint256 platformShare =
-			_totalInterest.mul(IConfig(config).getValue(ConfigNames.INTEREST_PLATFORM_SHARE)).div(1e18);
-		interestAmount = _totalInterest.sub(platformShare);
+		interestAmount = _totalInterest;
 		uint256 totalLiquidation = IONXPool(pool).totalLiquidation();
 		uint256 withdrawLiquidationSupplyAmount =
 			totalLiquidation == 0

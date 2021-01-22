@@ -9,17 +9,9 @@ interface IConfig {
 
 	function factory() external view returns (address);
 
-	function mint() external view returns (address);
-
 	function token() external view returns (address);
 
 	function developPercent() external view returns (uint256);
-
-	function share() external view returns (address);
-
-	function base() external view returns (address);
-
-	function governor() external view returns (address);
 
 	function getPoolValue(address _pool, bytes32 key) external view returns (uint256);
 
@@ -111,11 +103,6 @@ contract Configable {
 
 	modifier onlyPlatform() {
 		require(msg.sender == IConfig(config).platform(), "PLATFORM FORBIDDEN");
-		_;
-	}
-
-	modifier onlyGovernor() {
-		require(msg.sender == IConfig(config).governor(), "Governor FORBIDDEN");
 		_;
 	}
 

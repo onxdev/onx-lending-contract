@@ -6,12 +6,6 @@ import "./modules/Configable.sol";
 import "./modules/ConfigNames.sol";
 import "./modules/BaseMintField.sol";
 
-interface IONXMint {
-	function take() external view returns (uint256);
-
-	function mint() external returns (uint256);
-}
-
 contract ONXPool is Configable, BaseMintField {
 	using SafeMath for uint256;
 
@@ -135,7 +129,6 @@ contract ONXPool is Configable, BaseMintField {
 		remainSupply = remainSupply.add(amountDeposit);
 
 		totalStake = totalStake.add(amountDeposit);
-		_mintToPool();
 		_increaseLenderProductivity(from, amountDeposit);
 
 		supplys[from].interestSettled = interestPerSupply.mul(supplys[from].amountSupply).div(1e18);
@@ -156,10 +149,6 @@ contract ONXPool is Configable, BaseMintField {
 
 		reinvestAmount = supplys[from].interests;
 
-		uint256 platformShare =
-			reinvestAmount.mul(IConfig(config).getValue(ConfigNames.INTEREST_PLATFORM_SHARE)).div(1e18);
-		reinvestAmount = reinvestAmount.sub(platformShare);
-
 		supplys[from].amountSupply = supplys[from].amountSupply.add(reinvestAmount);
 		totalStake = totalStake.add(reinvestAmount);
 		supplys[from].interests = 0;
@@ -171,26 +160,11 @@ contract ONXPool is Configable, BaseMintField {
 			? 0
 			: liquidationPerSupply.mul(supplys[from].amountSupply).div(1e18);
 
-		distributePlatformShare(platformShare);
-		_mintToPool();
 		if (reinvestAmount > 0) {
 			_increaseLenderProductivity(from, reinvestAmount);
 		}
 
 		emit Reinvest(from, reinvestAmount);
-	}
-
-	function distributePlatformShare(uint256 platformShare) internal {
-		require(platformShare <= remainSupply, "ONX: NOT ENOUGH PLATFORM SHARE");
-		if (platformShare > 0) {
-			uint256 buybackShare = IConfig(config).getValue(ConfigNames.INTEREST_BUYBACK_SHARE);
-			uint256 buybackAmount = platformShare.mul(buybackShare).div(1e18);
-			uint256 dividendAmount = platformShare.sub(buybackAmount);
-			if (dividendAmount > 0) TransferHelper.safeTransfer(supplyToken, IConfig(config).share(), dividendAmount);
-			if (buybackAmount > 0)
-				TransferHelper.safeTransfer(supplyToken, IConfig(config).wallets(bytes32("team")), buybackAmount);
-			remainSupply = remainSupply.sub(platformShare);
-		}
 	}
 
 	function withdraw(uint256 amountWithdraw, address from)
@@ -214,17 +188,11 @@ contract ONXPool is Configable, BaseMintField {
 		withdrawLiquidation = supplys[from].liquidation.mul(amountWithdraw).div(supplys[from].amountSupply);
 		uint256 withdrawInterest = supplys[from].interests.mul(amountWithdraw).div(supplys[from].amountSupply);
 
-		uint256 platformShare =
-			withdrawInterest.mul(IConfig(config).getValue(ConfigNames.INTEREST_PLATFORM_SHARE)).div(1e18);
-		uint256 userShare = withdrawInterest.sub(platformShare);
-
-		distributePlatformShare(platformShare);
-
 		uint256 withdrawLiquidationSupplyAmount =
 			totalLiquidation == 0 ? 0 : withdrawLiquidation.mul(totalLiquidationSupplyAmount).div(totalLiquidation);
 
-		if (withdrawLiquidationSupplyAmount < amountWithdraw.add(userShare))
-			withdrawSupplyAmount = amountWithdraw.add(userShare).sub(withdrawLiquidationSupplyAmount);
+		if (withdrawLiquidationSupplyAmount < amountWithdraw.add(withdrawInterest))
+			withdrawSupplyAmount = amountWithdraw.add(withdrawInterest).sub(withdrawLiquidationSupplyAmount);
 
 		require(withdrawSupplyAmount <= remainSupply, "ONX: NOT ENOUGH POOL BALANCE");
 		require(withdrawLiquidation <= totalLiquidation, "ONX: NOT ENOUGH LIQUIDATION");
@@ -246,7 +214,6 @@ contract ONXPool is Configable, BaseMintField {
 			? 0
 			: liquidationPerSupply.mul(supplys[from].amountSupply).div(1e18);
 
-		_mintToPool();
 		if (withdrawSupplyAmount > 0) {
 			TransferHelper.safeTransfer(supplyToken, msg.sender, withdrawSupplyAmount);
 		}
@@ -305,7 +272,6 @@ contract ONXPool is Configable, BaseMintField {
 		borrows[from].amountBorrow = borrows[from].amountBorrow.add(expectBorrow);
 		borrows[from].interestSettled = interestPerBorrow.mul(borrows[from].amountBorrow).div(1e18);
 
-		_mintToPool();
 		if (expectBorrow > 0) {
 			TransferHelper.safeTransfer(supplyToken, msg.sender, expectBorrow);
 			_increaseBorrowerProductivity(from, expectBorrow);
@@ -349,7 +315,6 @@ contract ONXPool is Configable, BaseMintField {
 		require(amountIn >= repayAmount.add(repayInterest), "ONX: INVALID AMOUNT");
 		// TransferHelper.safeTransferFrom(supplyToken, from, address(this), repayAmount.add(repayInterest));
 
-		_mintToPool();
 		if (repayAmount > 0) {
 			_decreaseBorrowerProductivity(from, repayAmount);
 		}
@@ -369,12 +334,12 @@ contract ONXPool is Configable, BaseMintField {
 		uint256 liquidationRate = IConfig(config).getPoolValue(address(this), ConfigNames.POOL_LIQUIDATION_RATE);
 
 		////// Used pool price for liquidation limit check
-		uint pledgePrice = IConfig(config).getPoolValue(address(this), ConfigNames.POOL_PRICE);
-		uint collateralValue = borrows[_user].amountCollateral.mul(pledgePrice).div(1e18);
+		////// uint pledgePrice = IConfig(config).getPoolValue(address(this), ConfigNames.POOL_PRICE);
+		////// uint collateralValue = borrows[_user].amountCollateral.mul(pledgePrice).div(1e18);
 
 		////// Need to set token price for liquidation
-		// uint256 collateralValue =
-		// 	IConfig(config).convertTokenAmount(collateralToken, supplyToken, borrows[_user].amountCollateral);
+		uint256 collateralValue =
+		 	IConfig(config).convertTokenAmount(collateralToken, supplyToken, borrows[_user].amountCollateral);
 
 		uint256 expectedRepay = borrows[_user].amountBorrow.add(borrows[_user].interests);
 
@@ -403,7 +368,6 @@ contract ONXPool is Configable, BaseMintField {
 		borrows[_user].interests = 0;
 		borrows[_user].interestSettled = 0;
 
-		_mintToPool();
 		if (borrowAmount > 0) {
 			_decreaseBorrowerProductivity(_user, borrowAmount);
 		}
@@ -413,20 +377,8 @@ contract ONXPool is Configable, BaseMintField {
 		return totalStake.add(totalBorrow);
 	}
 
-	function _mintToPool() internal {
-		if (IONXMint(IConfig(config).mint()).take() > 0) {
-			IONXMint(IConfig(config).mint()).mint();
-		}
-	}
-
 	function mint() external {
-		_mintToPool();
 		_mintLender();
 		_mintBorrower();
-	}
-
-	function _currentReward() internal view override returns (uint256) {
-		uint256 remain = IONXMint(IConfig(config).mint()).take();
-		return remain.add(mintedShare).add(IERC20(IConfig(config).token()).balanceOf(address(this))).sub(totalShare);
 	}
 }

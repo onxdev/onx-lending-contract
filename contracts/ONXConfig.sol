@@ -13,6 +13,10 @@ interface IONXPool {
 	function collateralToken() external view returns (address);
 }
 
+interface IAETH {
+	function ratio() external view returns (uint256);
+}
+
 contract ONXConfig {
 	using SafeMath for uint256;
 	using SafeMath for uint8;
@@ -21,11 +25,7 @@ contract ONXConfig {
 	address public platform;
 	address public developer;
 	address public factory;
-	address public mint;
 	address public token;
-	address public share;
-	address public base;
-	address public governor;
 	address public WETH;
 	uint256 public lastPriceBlock;
 	uint256 public DAY = 6400;
@@ -61,21 +61,13 @@ contract ONXConfig {
 	function initialize(
 		address _platform,
 		address _factory,
-		address _mint,
 		address _token,
-		address _share,
-		address _governor,
-		address _base,
 		address _WETH
 	) external {
 		require(msg.sender == owner || msg.sender == developer, "ONX: Config FORBIDDEN");
-		mint = _mint;
 		platform = _platform;
 		factory = _factory;
 		token = _token;
-		share = _share;
-		governor = _governor;
-		base = _base;
 		WETH = _WETH;
 	}
 
@@ -95,14 +87,8 @@ contract ONXConfig {
 	function initParameter() external {
 		require(msg.sender == owner || msg.sender == developer, "ONX: Config FORBIDDEN");
 		_setParams(ConfigNames.STAKE_LOCK_TIME, 0, 7 * DAY, 1 * DAY, 0);
-		_setParams(ConfigNames.MINT_AMOUNT_PER_BLOCK, 0, 10000 * 1e18, 1e17, 1e17);
-		_setParams(ConfigNames.INTEREST_PLATFORM_SHARE, 0, 1e18, 1e17, 1e17);
-		_setParams(ConfigNames.INTEREST_BUYBACK_SHARE, 10000, 10000, 0, 10000);
 		_setParams(ConfigNames.CHANGE_PRICE_DURATION, 0, 500, 100, 0);
 		_setParams(ConfigNames.CHANGE_PRICE_PERCENT, 1, 100, 1, 20);
-		_setParams(ConfigNames.ONX_USER_MINT, 0, 0, 0, 3000);
-		_setParams(ConfigNames.ONX_TEAM_MINT, 0, 0, 0, 7142);
-		_setParams(ConfigNames.ONX_REWAED_MINT, 0, 0, 0, 5000);
 		_setParams(ConfigNames.DEPOSIT_ENABLE, 0, 0, 0, 1);
 		_setParams(ConfigNames.WITHDRAW_ENABLE, 0, 0, 0, 1);
 		_setParams(ConfigNames.BORROW_ENABLE, 0, 0, 0, 1);
@@ -182,7 +168,7 @@ contract ONXConfig {
 
 	function setValue(bytes32 _key, uint256 _value) external {
 		require(
-			msg.sender == owner || msg.sender == governor || msg.sender == platform || msg.sender == developer,
+			msg.sender == owner || msg.sender == platform || msg.sender == developer,
 			"ONX: ONLY DEVELOPER"
 		);
 		params[_key].value = _value;
@@ -191,7 +177,7 @@ contract ONXConfig {
 
 	function setPoolValue(address _pool, bytes32 _key, uint256 _value) external {
 		require(
-			msg.sender == owner || msg.sender == governor || msg.sender == platform || msg.sender == developer,
+			msg.sender == owner || msg.sender == platform || msg.sender == developer,
 			"ONX: FORBIDDEN"
 		);
 		_setPoolValue(_pool, _key, _value);
@@ -213,7 +199,7 @@ contract ONXConfig {
 		uint256 _value
 	) external {
 		require(
-			msg.sender == owner || msg.sender == governor || msg.sender == platform || msg.sender == developer,
+			msg.sender == owner || msg.sender == platform || msg.sender == developer,
 			"ONX: FORBIDDEN"
 		);
 		_setParams(_key, _min, _max, _span, _value);
@@ -228,7 +214,7 @@ contract ONXConfig {
 		uint256 _value
 	) external {
 		require(
-			msg.sender == owner || msg.sender == governor || msg.sender == platform || msg.sender == developer,
+			msg.sender == owner || msg.sender == platform || msg.sender == developer,
 			"ONX: FORBIDDEN"
 		);
 		_setPoolParams(_pool, _key, _min, _max, _span, _value);
@@ -263,19 +249,25 @@ contract ONXConfig {
 	}
 
 	function convertTokenAmount(
-		address _fromToken,
-		address _toToken,
+		address _fromToken,			////// usually collateral token
+		address _toToken,			////// usually lend token
 		uint256 _fromAmount
 	) external view returns (uint256 toAmount) {
-		uint256 fromPrice = prices[_fromToken];
-		uint256 toPrice = prices[_toToken];
-		uint8 fromDecimals = IERC20(_fromToken).decimals();
-		uint8 toDecimals = IERC20(_toToken).decimals();
-		toAmount = _fromAmount.mul(fromPrice).div(toPrice);
-		if (fromDecimals > toDecimals) {
-			toAmount = toAmount.div(10**(fromDecimals.sub(toDecimals)));
-		} else if (toDecimals > fromDecimals) {
-			toAmount = toAmount.mul(10**(toDecimals.sub(fromDecimals)));
+		// use original price calculation on other token
+		// use ratio for aETH
+		if (address(WETH) == address(_toToken)) {
+			toAmount = _fromAmount.mul(IAETH(_fromToken).ratio()).div(1e18);
+		} else {
+			uint256 fromPrice = prices[_fromToken];
+			uint256 toPrice = prices[_toToken];
+			uint8 fromDecimals = IERC20(_fromToken).decimals();
+			uint8 toDecimals = IERC20(_toToken).decimals();
+			toAmount = _fromAmount.mul(fromPrice).div(toPrice);
+			if (fromDecimals > toDecimals) {
+				toAmount = toAmount.div(10**(fromDecimals.sub(toDecimals)));
+			} else if (toDecimals > fromDecimals) {
+				toAmount = toAmount.mul(10**(toDecimals.sub(fromDecimals)));
+			}
 		}
 	}
 }
