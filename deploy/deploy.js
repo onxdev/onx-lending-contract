@@ -2,13 +2,15 @@ let fs = require("fs");
 let path = require("path");
 const ethers = require("ethers")
 const ERC20 = require("../artifacts/contracts/test/ERC20TOKEN.sol/ERC20TOKEN.json")
-const WETH = require("../artifacts/contracts/test/weth/WETH.sol/WETH9.json")
+const WETH = require("../artifacts/contracts/weth/WETH.sol/WETH9.json")
 const AETH = require("../artifacts/contracts/test/AETH.sol/AETH.json")
 const ONXConfig = require("../artifacts/contracts/ONXConfig.sol/ONXConfig.json")
 const ONXPlateForm = require("../artifacts/contracts/ONXPlatform.sol/ONXPlatform.json")
 const ONXPool = require("../artifacts/contracts/ONX.sol/ONXPool.json")
 const ONXFactory = require("../artifacts/contracts/ONXFactory.sol/ONXFactory.json")
-const CakeLPStrategy = require("../artifacts/contracts/CakeLPStrategy.sol/CakeLPStrategy.json");
+const ONXStrategyCollateral = require("../artifacts/contracts/ONXStrategyCollateral.sol/ONXStrategyCollateral.json")
+const ONXTestFarm = require("../artifacts/contracts/test/ONXTestFarm.sol/ONXTestFarm.json")
+const ONXTestToken = require("../artifacts/contracts/test/ONXTestToken.sol/ONXTestToken.json")
 
 let ONX_ADDRESS = ""
 let WETH_ADDRESS = ""
@@ -20,9 +22,8 @@ let CONFIG_ADDRESS = ""
 let POOL_ADDRESS = ""
 let FACTORY_ADDRESS = ""
 
-let MASTERCHEF_ADDRESS = ""
+let ONXFARM_ADDRESS = ""
 let STRATEGY_ADDRESS = ""
-let STRATEGY2_ADDRESS = ""
 
 const loadJsonFile = require('load-json-file');
 const keys = loadJsonFile.sync('./keys.json');
@@ -39,7 +40,7 @@ let config = {
     "weth_address": "0xE95A203B1a91a908F9B9CE46459d101078c2c3cb"
 }
 
-const WETH_ADDRESS = config.weth_address
+WETH_ADDRESS = config.weth_address
 
 if(fs.existsSync(path.join(__dirname, ".config.json"))) {
     let _config = JSON.parse(fs.readFileSync(path.join(__dirname, ".config.json")).toString());
@@ -87,13 +88,23 @@ async function deploy() {
 
   // ONX Token
   factory = new ethers.ContractFactory(
-    ERC20.abi,
-    ERC20.bytecode,
+    ONXTestToken.abi,
+    ONXTestToken.bytecode,
     walletWithProvider
   )
-  ins = await factory.deploy('ONX','ONX','18','100000000000000000000000000',ETHER_SEND_CONFIG)
+  ins = await factory.deploy(ETHER_SEND_CONFIG)
   await waitForMint(ins.deployTransaction.hash)
   ONX_ADDRESS = ins.address
+
+  // ONX Farm
+  factory = new ethers.ContractFactory(
+    ONXTestFarm.abi,
+    ONXTestFarm.bytecode,
+    walletWithProvider
+  )
+  ins = await factory.deploy(ONX_ADDRESS, config.walletTeam, config.walletSpare, ETHER_SEND_CONFIG)
+  await waitForMint(ins.deployTransaction.hash)
+  ONXFARM_ADDRESS = ins.address
   
   // AETH Token
   factory = new ethers.ContractFactory(
@@ -165,6 +176,15 @@ async function deploy() {
 
 async function initialize() {
     ins = new ethers.Contract(
+      ONX_ADDRESS,
+      ONXTestToken.abi,
+      getWallet()
+    )
+    tx = await ins.transferOwnership(ONXFARM_ADDRESS, ETHER_SEND_CONFIG)
+    console.log('ONX Token transferownership')
+    await waitForMint(tx.hash)
+
+    ins = new ethers.Contract(
         FACTORY_ADDRESS,
         ONXFactory.abi,
         getWallet()
@@ -234,14 +254,14 @@ async function initialize() {
     // console.log('UNIPAIR mint')
     // await waitForMint(tx.hash)
 
-    // ins = new ethers.Contract(
-    //     MASTERCHEF_ADDRESS,
-    //     MasterChef.abi,
-    //     getWallet()
-    //   )
-    // tx = await ins.add(100, COLLATERAL_TOKEN_ADDRESS, false, ETHER_SEND_CONFIG)
-    // console.log('MasterChef add')
-    // await waitForMint(tx.hash)
+    ins = new ethers.Contract(
+        ONXFARM_ADDRESS,
+        ONXTestFarm.abi,
+        getWallet()
+      )
+    tx = await ins.add(100, COLLATERAL_TOKEN_ADDRESS, false, ETHER_SEND_CONFIG)
+    console.log('ONXFarm add')
+    await waitForMint(tx.hash)
 
     console.log('LEND_TOKEN_ADDRESS', LEND_TOKEN_ADDRESS)
     console.log('COLLATERAL_TOKEN_ADDRESS', COLLATERAL_TOKEN_ADDRESS)
@@ -257,14 +277,27 @@ async function initialize() {
     let poolAddr = await ins.getPool(LEND_TOKEN_ADDRESS, COLLATERAL_TOKEN_ADDRESS)
     console.log('pool address:', poolAddr)
 
-    // ins = new ethers.Contract(
-    //     PLATFORM_ADDRESS,
-    //     ONXPlateForm.abi,
-    //     getWallet()
-    //   )
-    // tx = await ins.switchStrategy(LEND_TOKEN_ADDRESS, COLLATERAL_TOKEN_ADDRESS, STRATEGY_ADDRESS, ETHER_SEND_CONFIG)
-    // console.log('ONXPlateForm switchStrategy')
-    // await waitForMint(tx.hash)
+    factory = new ethers.ContractFactory(
+      ONXStrategyCollateral.abi,
+      ONXStrategyCollateral.bytecode,
+      walletWithProvider
+    )
+    ins = await factory.deploy(ETHER_SEND_CONFIG)
+    console.log('ONXCollateralStrategy deploy')
+    await waitForMint(ins.deployTransaction.hash)
+    STRATEGY_ADDRESS = ins.address
+    tx = await ins.initialize(ONX_ADDRESS, COLLATERAL_TOKEN_ADDRESS, poolAddr, ONXFARM_ADDRESS, 0, ETHER_SEND_CONFIG)
+    console.log('ONXStrategy ONXCollateralStrategy')
+    await waitForMint(tx.hash)
+
+    ins = new ethers.Contract(
+        PLATFORM_ADDRESS,
+        ONXPlateForm.abi,
+        getWallet()
+      )
+    tx = await ins.setCollateralStrategy(LEND_TOKEN_ADDRESS, COLLATERAL_TOKEN_ADDRESS, STRATEGY_ADDRESS, ETHER_SEND_CONFIG)
+    console.log('ONXPlateForm setCollateralStrategy')
+    await waitForMint(tx.hash)
 
 
     console.log('transfer...')
@@ -311,9 +344,8 @@ async function main() {
     FACTORY_ADDRESS = ${FACTORY_ADDRESS}
 
     ===============================
-    MASTERCHEF_ADDRESS = ${MASTERCHEF_ADDRESS}
+    ONXFARM_ADDRESS = ${ONXFARM_ADDRESS}
     STRATEGY_ADDRESS = ${STRATEGY_ADDRESS}
-    STRATEGY2_ADDRESS = ${STRATEGY2_ADDRESS}
     
     LEND_TOKEN_ADDRESS = ${LEND_TOKEN_ADDRESS}
     COLLATERAL_TOKEN_ADDRESS = ${COLLATERAL_TOKEN_ADDRESS}

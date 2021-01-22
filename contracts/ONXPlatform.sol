@@ -12,66 +12,27 @@ interface IWETH {
 }
 
 interface IONXPool {
-	function deposit(uint256 _amountDeposit, address _from) external;
+	function deposit(uint _amountDeposit, address _from) external;
+	function withdraw(uint _amountWithdraw, address _from) external returns(uint, uint);
+	function borrow(uint _amountCollateral, uint _repayAmount, uint _expectBorrow, address _from) external;
+	function repay(uint _amountCollateral, address _from) external returns(uint, uint);
+	function liquidation(address _user, address _from) external returns (uint);
+	function reinvest(address _from) external returns(uint);
 
-	function withdraw(uint256 _amountWithdraw, address _from) external returns (uint256, uint256);
-
-	function borrow(
-		uint256 _amountCollateral,
-		uint256 _repayAmount,
-		uint256 _expectBorrow,
-		address _from
-	) external;
-
-	function repay(uint256 _amountCollateral, address _from) external returns (uint256, uint256);
-
-	function liquidation(address _user, address _from) external returns (uint256);
-
-	function reinvest(address _from) external returns (uint256);
-
-	function supplys(address user)
-		external
-		view
-		returns (
-			uint256,
-			uint256,
-			uint256,
-			uint256,
-			uint256
-		);
-
-	function borrows(address user)
-		external
-		view
-		returns (
-			uint256,
-			uint256,
-			uint256,
-			uint256,
-			uint256
-		);
-
-	function getTotalAmount() external view returns (uint256);
-
+	function setCollateralStrategy(address _collateralStrategy) external;
+	function supplys(address user) external view returns(uint,uint,uint,uint,uint);
+	function borrows(address user) external view returns(uint,uint,uint,uint,uint);
+	function getTotalAmount() external view returns (uint);
 	function supplyToken() external view returns (address);
-
-	function interestPerBorrow() external view returns (uint256);
-
-	function interestPerSupply() external view returns (uint256);
-
-	function lastInterestUpdate() external view returns (uint256);
-
-	function getInterests() external view returns (uint256);
-
-	function totalBorrow() external view returns (uint256);
-
-	function remainSupply() external view returns (uint256);
-
-	function liquidationPerSupply() external view returns (uint256);
-
-	function totalLiquidationSupplyAmount() external view returns (uint256);
-
-	function totalLiquidation() external view returns (uint256);
+	function interestPerBorrow() external view returns(uint);
+	function interestPerSupply() external view returns(uint);
+	function lastInterestUpdate() external view returns(uint);
+	function getInterests() external view returns(uint);
+	function totalBorrow() external view returns(uint);
+	function remainSupply() external view returns(uint);
+	function liquidationPerSupply() external view returns(uint);
+	function totalLiquidationSupplyAmount() external view returns(uint);
+	function totalLiquidation() external view returns(uint);
 }
 
 interface IONXFactory {
@@ -297,5 +258,12 @@ contract ONXPlatform is Configable {
 		address pool = IONXFactory(IConfig(config).factory()).getPool(_lendToken, _collateralToken);
 		require(pool != address(0), "POOL NOT EXIST");
 		IConfig(config).setPoolValue(pool, _key, _value);
+	}
+
+	function setCollateralStrategy(address _lendToken, address _collateralToken, address _collateralStrategy) external onlyDeveloper
+	{
+		address pool = IONXFactory(IConfig(config).factory()).getPool(_lendToken, _collateralToken);
+		require(pool != address(0), "POOL NOT EXIST");
+		IONXPool(pool).setCollateralStrategy(_collateralStrategy);
 	}
 }

@@ -6,10 +6,22 @@ import "./modules/Configable.sol";
 import "./modules/ConfigNames.sol";
 import "./modules/BaseMintField.sol";
 
+interface IONXStrategy {
+    function invest(address user, uint256 amount) external; 
+    function withdraw(address user, uint256 amount) external;
+    function liquidation(address user) external;
+    function claim(address user, uint256 amount, uint256 total) external;
+    function exit(uint256 amount) external;
+    function query() external view returns (uint256);
+    function mint() external;
+    function interestToken() external view returns (address);
+    function farmToken() external view returns (address);
+}
+
 contract ONXPool is Configable, BaseMintField {
 	using SafeMath for uint256;
 
-    address public factory;
+	address public factory;
 	address public supplyToken;
 	address public collateralToken;
 
@@ -58,6 +70,8 @@ contract ONXPool is Configable, BaseMintField {
 
 	uint256 public lastInterestUpdate;
 
+	address public collateralStrategy;
+
 	event Deposit(address indexed _user, uint256 _amount, uint256 _collateralAmount);
 	event Withdraw(address indexed _user, uint256 _supplyAmount, uint256 _collateralAmount, uint256 _interestAmount);
 	event Borrow(address indexed _user, uint256 _supplyAmount, uint256 _collateralAmount);
@@ -70,10 +84,15 @@ contract ONXPool is Configable, BaseMintField {
 	);
 	event Reinvest(address indexed _user, uint256 _reinvestAmount);
 
-    constructor() public 
-    {
-        factory = msg.sender;
-    }
+	constructor() public 
+	{
+			factory = msg.sender;
+	}
+
+	function setCollateralStrategy(address _collateralStrategy) external onlyPlatform
+	{
+			collateralStrategy = _collateralStrategy;
+	}
 
 	function init(address _supplyToken, address _collateralToken) external onlyFactory {
 		supplyToken = _supplyToken;
@@ -172,7 +191,7 @@ contract ONXPool is Configable, BaseMintField {
 		onlyPlatform
 		returns (uint256 withdrawSupplyAmount, uint256 withdrawLiquidation)
 	{
-		require(amountWithdraw > 0, "ONX: INVALID AMOUNT");
+		require(amountWithdraw > 0, "ONX: INVALID AMOUNT TO WITHDRAW");
 		require(amountWithdraw <= supplys[from].amountSupply, "ONX: NOT ENOUGH BALANCE");
 
 		updateInterests();
@@ -221,6 +240,10 @@ contract ONXPool is Configable, BaseMintField {
 		_decreaseLenderProductivity(from, amountWithdraw);
 
 		if (withdrawLiquidation > 0) {
+			if(collateralStrategy != address(0))
+			{
+					IONXStrategy(collateralStrategy).claim(from, withdrawLiquidation, totalLiquidation.add(withdrawLiquidation));
+			}
 			TransferHelper.safeTransfer(collateralToken, msg.sender, withdrawLiquidation);
 		}
 
@@ -233,11 +256,11 @@ contract ONXPool is Configable, BaseMintField {
 		uint256 expectBorrow,
 		address from
 	) public onlyPlatform {
-		uint256 amountIn = IERC20(collateralToken).balanceOf(address(this)).sub(totalPledge);
-
-		require(amountIn == amountCollateral, "ONX: INVALID AMOUNT");
-
-		// if(amountCollateral > 0) TransferHelper.safeTransferFrom(collateralToken, from, address(this), amountCollateral);
+		uint256 amountIn = IERC20(collateralToken).balanceOf(address(this));
+		if(collateralStrategy == address(0))
+		{
+			amountIn = amountIn.sub(totalPledge);
+		}
 
 		updateInterests();
 
@@ -258,6 +281,12 @@ contract ONXPool is Configable, BaseMintField {
 		totalBorrow = totalBorrow.add(expectBorrow);
 		totalPledge = totalPledge.add(amountCollateral);
 		remainSupply = remainSupply.sub(expectBorrow);
+
+		if(collateralStrategy != address(0) && amountCollateral > 0)
+		{
+				IERC20(IONXStrategy(collateralStrategy).farmToken()).approve(collateralStrategy, amountCollateral);
+				IONXStrategy(collateralStrategy).invest(from, amountCollateral);
+		}
 
 		if (borrows[from].index == 0) {
 			borrowerList.push(from);
@@ -286,7 +315,7 @@ contract ONXPool is Configable, BaseMintField {
 		returns (uint256 repayAmount, uint256 repayInterest)
 	{
 		require(amountCollateral <= borrows[from].amountCollateral, "ONX: NOT ENOUGH COLLATERAL");
-		require(amountCollateral > 0, "ONX: INVALID AMOUNT");
+		require(amountCollateral > 0, "ONX: INVALID AMOUNT TO REPAY");
 
 		uint256 amountIn = IERC20(supplyToken).balanceOf(address(this)).sub(remainSupply);
 
@@ -311,8 +340,12 @@ contract ONXPool is Configable, BaseMintField {
 
 		remainSupply = remainSupply.add(repayAmount.add(repayInterest));
 
+		if(collateralStrategy != address(0))
+		{
+				IONXStrategy(collateralStrategy).withdraw(from, amountCollateral);
+		}
 		TransferHelper.safeTransfer(collateralToken, msg.sender, amountCollateral);
-		require(amountIn >= repayAmount.add(repayInterest), "ONX: INVALID AMOUNT");
+		require(amountIn >= repayAmount.add(repayInterest), "ONX: INVALID AMOUNT TO REPAY");
 		// TransferHelper.safeTransferFrom(supplyToken, from, address(this), repayAmount.add(repayInterest));
 
 		if (repayAmount > 0) {
@@ -360,6 +393,10 @@ contract ONXPool is Configable, BaseMintField {
 
 		liquidationHistory[_user].push(liq);
 		liquidationHistoryLength[_user]++;
+		if(collateralStrategy != address(0))
+		{
+			IONXStrategy(collateralStrategy).liquidation(_user);
+		}
 
 		emit Liquidation(from, _user, borrows[_user].amountBorrow, borrows[_user].amountCollateral);
 
