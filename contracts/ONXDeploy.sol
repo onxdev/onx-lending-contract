@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.6;
 pragma experimental ABIEncoderV2;
+
 import "./modules/ConfigNames.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 
 interface IConfigable {
 	function setupConfig(address config) external;
@@ -52,7 +54,7 @@ interface IONXPlatform {
 	) external;
 }
 
-contract ONXDeploy {
+contract ONXDeploy is Initializable {
 	address public owner;
 	address public config;
 	modifier onlyOwner() {
@@ -60,7 +62,7 @@ contract ONXDeploy {
 		_;
 	}
 
-	constructor() public {
+	function initialize() public initializer {
 		owner = msg.sender;
 	}
 

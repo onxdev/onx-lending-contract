@@ -5,54 +5,50 @@ import "./libraries/SafeMath.sol";
 import "./modules/Configable.sol";
 import "./modules/ConfigNames.sol";
 import "./modules/BaseMintField.sol";
+import "./libraries/Configurable.sol";
 
 interface IONXStrategy {
-    function invest(address user, uint256 amount) external; 
-    function withdraw(address user, uint256 amount) external;
-    function liquidation(address user) external;
-    function claim(address user, uint256 amount, uint256 total) external;
-    function exit(uint256 amount) external;
-    function query() external view returns (uint256);
-    function mint() external;
-    function interestToken() external view returns (address);
-    function farmToken() external view returns (address);
+	function invest(address user, uint256 amount) external;
+	function withdraw(address user, uint256 amount) external;
+	function liquidation(address user) external;
+	function claim(address user, uint256 amount, uint256 total) external;
+	function exit(uint256 amount) external;
+	function query() external view returns (uint256);
+	function mint() external;
+	function interestToken() external view returns (address);
+	function farmToken() external view returns (address);
 }
 
-contract ONXPool is Configable, BaseMintField {
+contract ONXPool is BaseMintField, Configurable {
 	using SafeMath for uint256;
 
 	address public factory;
 	address public supplyToken;
 	address public collateralToken;
 
-	struct SupplyStruct {
-		uint256 amountSupply;
-		uint256 interestSettled;
-		uint256 liquidationSettled;
-		uint256 interests;
-		uint256 liquidation;
-	}
+	// SupplyStruct
+	bytes32 constant _amountSupply_SS = "SS#amountSupply";
+	bytes32 constant _interestSettled_SS = "SS#interestSettled";
+	bytes32 constant _liquidationSettled_SS = "SS#liquidationSettled";
+	bytes32 constant _interests_SS = "SS#interests";
+	bytes32 constant _liquidation_SS = "SS#liquidation";
 
-	struct BorrowStruct {
-		uint256 index;
-		uint256 amountCollateral;
-		uint256 interestSettled;
-		uint256 amountBorrow;
-		uint256 interests;
-	}
+	// BorrowStruct
+	bytes32 constant _index_BS = "BS#index";
+	bytes32 constant _amountCollateral_BS = "BS#amountCollateral";
+	bytes32 constant _interestSettled_BS = "BS#interestSettled";
+	bytes32 constant _amountBorrow_BS = "BS#amountBorrow";
+	bytes32 constant _interests_BS = "BS#interests";
 
-	struct LiquidationStruct {
-		uint256 amountCollateral;
-		uint256 liquidationAmount;
-		uint256 timestamp;
-	}
+	// LiquidationStruct
+	bytes32 constant _amountCollateral_LS = "LS#amountCollateral";
+	bytes32 constant _liquidationAmount_LS = "LS#liquidationAmount";
+	bytes32 constant _timestamp_LS = "LS#timestamp";
+	bytes32 constant _length_LS = "LS#length";
 
 	address[] public borrowerList;
 	uint256 public numberBorrowers;
 
-	mapping(address => SupplyStruct) public supplys;
-	mapping(address => BorrowStruct) public borrows;
-	mapping(address => LiquidationStruct[]) public liquidationHistory;
 	mapping(address => uint256) public liquidationHistoryLength;
 
 	uint256 public interestPerSupply;
@@ -84,14 +80,15 @@ contract ONXPool is Configable, BaseMintField {
 	);
 	event Reinvest(address indexed _user, uint256 _reinvestAmount);
 
-	constructor() public 
+	function initialize(address _factory) external initializer
 	{
-			factory = msg.sender;
+		owner = _factory;
+		factory = _factory;
 	}
 
 	function setCollateralStrategy(address _collateralStrategy) external onlyPlatform
 	{
-			collateralStrategy = _collateralStrategy;
+		collateralStrategy = _collateralStrategy;
 	}
 
 	function init(address _supplyToken, address _collateralToken) external onlyFactory {
@@ -107,8 +104,8 @@ contract ONXPool is Configable, BaseMintField {
 
 		interestPerSupply = interestPerSupply.add(
 			totalSupply == 0
-				? 0
-				: interestPerBlock.mul(block.number - lastInterestUpdate).mul(totalBorrow).div(totalSupply)
+			? 0
+			: interestPerBlock.mul(block.number - lastInterestUpdate).mul(totalBorrow).div(totalSupply)
 		);
 		interestPerBorrow = interestPerBorrow.add(interestPerBlock.mul(block.number - lastInterestUpdate));
 		lastInterestUpdate = block.number;
@@ -120,8 +117,8 @@ contract ONXPool is Configable, BaseMintField {
 		uint256 marketFrenzy = IConfig(config).getPoolValue(address(this), ConfigNames.POOL_MARKET_FRENZY);
 		uint256 aDay = IConfig(config).DAY();
 		interestPerBlock = totalSupply == 0
-			? 0
-			: baseInterests.add(totalBorrow.mul(marketFrenzy).div(totalSupply)).div(365 * aDay);
+		? 0
+		: baseInterests.add(totalBorrow.mul(marketFrenzy).div(totalSupply)).div(365 * aDay);
 	}
 
 	function updateLiquidation(uint256 _liquidation) internal {
@@ -137,21 +134,22 @@ contract ONXPool is Configable, BaseMintField {
 		updateInterests();
 
 		uint256 addLiquidation =
-			liquidationPerSupply.mul(supplys[from].amountSupply).div(1e18).sub(supplys[from].liquidationSettled);
+		liquidationPerSupply.mul(getConfig(_amountSupply_SS, from)).div(1e18).sub(getConfig(_liquidationSettled_SS, from));
 
-		supplys[from].interests = supplys[from].interests.add(
-			interestPerSupply.mul(supplys[from].amountSupply).div(1e18).sub(supplys[from].interestSettled)
-		);
-		supplys[from].liquidation = supplys[from].liquidation.add(addLiquidation);
+		_setConfig(_interests_SS, from, getConfig(_interests_SS, from).add(
+				interestPerSupply.mul(getConfig(_amountSupply_SS, from)).div(1e18).sub(getConfig(_interestSettled_SS, from))
+			));
 
-		supplys[from].amountSupply = supplys[from].amountSupply.add(amountDeposit);
+		_setConfig(_liquidation_SS, from, getConfig(_liquidation_SS, from).add(addLiquidation));
+
+		_setConfig(_amountSupply_SS, from, getConfig(_amountSupply_SS, from).add(amountDeposit));
 		remainSupply = remainSupply.add(amountDeposit);
 
 		totalStake = totalStake.add(amountDeposit);
 		_increaseLenderProductivity(from, amountDeposit);
 
-		supplys[from].interestSettled = interestPerSupply.mul(supplys[from].amountSupply).div(1e18);
-		supplys[from].liquidationSettled = liquidationPerSupply.mul(supplys[from].amountSupply).div(1e18);
+		_setConfig(_interestSettled_SS, from, interestPerSupply.mul(getConfig(_amountSupply_SS, from)).div(1e18));
+		_setConfig(_liquidationSettled_SS, from, liquidationPerSupply.mul(getConfig(_amountSupply_SS, from)).div(1e18));
 		emit Deposit(from, amountDeposit, addLiquidation);
 	}
 
@@ -159,25 +157,29 @@ contract ONXPool is Configable, BaseMintField {
 		updateInterests();
 
 		uint256 addLiquidation =
-			liquidationPerSupply.mul(supplys[from].amountSupply).div(1e18).sub(supplys[from].liquidationSettled);
+		liquidationPerSupply.mul(getConfig(_amountSupply_SS, from)).div(1e18).sub(getConfig(_liquidationSettled_SS, from));
 
-		supplys[from].interests = supplys[from].interests.add(
-			interestPerSupply.mul(supplys[from].amountSupply).div(1e18).sub(supplys[from].interestSettled)
-		);
-		supplys[from].liquidation = supplys[from].liquidation.add(addLiquidation);
+		_setConfig(_interests_SS, from, getConfig(_interests_SS, from).add(
+				interestPerSupply.mul(getConfig(_amountSupply_SS, from)).div(1e18).sub(getConfig(_interestSettled_SS, from))
+			));
 
-		reinvestAmount = supplys[from].interests;
+		_setConfig(_liquidation_SS, from, getConfig(_liquidation_SS, from).add(addLiquidation));
 
-		supplys[from].amountSupply = supplys[from].amountSupply.add(reinvestAmount);
+		reinvestAmount = getConfig(_interests_SS, from);
+
+		_setConfig(_amountSupply_SS, from, getConfig(_amountSupply_SS, from).add(reinvestAmount));
+
 		totalStake = totalStake.add(reinvestAmount);
-		supplys[from].interests = 0;
 
-		supplys[from].interestSettled = supplys[from].amountSupply == 0
+		_setConfig(_interests_SS, from, 0);
+
+		_setConfig(_interestSettled_SS, from, getConfig(_amountSupply_SS, from) == 0
 			? 0
-			: interestPerSupply.mul(supplys[from].amountSupply).div(1e18);
-		supplys[from].liquidationSettled = supplys[from].amountSupply == 0
+			: interestPerSupply.mul(getConfig(_amountSupply_SS, from)).div(1e18));
+
+		_setConfig(_liquidationSettled_SS, from, getConfig(_amountSupply_SS, from) == 0
 			? 0
-			: liquidationPerSupply.mul(supplys[from].amountSupply).div(1e18);
+			: liquidationPerSupply.mul(getConfig(_amountSupply_SS, from)).div(1e18));
 
 		if (reinvestAmount > 0) {
 			_increaseLenderProductivity(from, reinvestAmount);
@@ -187,28 +189,29 @@ contract ONXPool is Configable, BaseMintField {
 	}
 
 	function withdraw(uint256 amountWithdraw, address from)
-		public
-		onlyPlatform
-		returns (uint256 withdrawSupplyAmount, uint256 withdrawLiquidation)
+	public
+	onlyPlatform
+	returns (uint256 withdrawSupplyAmount, uint256 withdrawLiquidation)
 	{
 		require(amountWithdraw > 0, "ONX: INVALID AMOUNT TO WITHDRAW");
-		require(amountWithdraw <= supplys[from].amountSupply, "ONX: NOT ENOUGH BALANCE");
+		require(amountWithdraw <= getConfig(_amountSupply_SS, from), "ONX: NOT ENOUGH BALANCE");
 
 		updateInterests();
 
 		uint256 addLiquidation =
-			liquidationPerSupply.mul(supplys[from].amountSupply).div(1e18).sub(supplys[from].liquidationSettled);
+		liquidationPerSupply.mul(getConfig(_amountSupply_SS, from)).div(1e18).sub(getConfig(_liquidationSettled_SS, from));
 
-		supplys[from].interests = supplys[from].interests.add(
-			interestPerSupply.mul(supplys[from].amountSupply).div(1e18).sub(supplys[from].interestSettled)
-		);
-		supplys[from].liquidation = supplys[from].liquidation.add(addLiquidation);
+		_setConfig(_interests_SS, from, getConfig(_interests_SS, from).add(
+				interestPerSupply.mul(getConfig(_amountSupply_SS, from)).div(1e18).sub(getConfig(_interestSettled_SS, from))
+			));
 
-		withdrawLiquidation = supplys[from].liquidation.mul(amountWithdraw).div(supplys[from].amountSupply);
-		uint256 withdrawInterest = supplys[from].interests.mul(amountWithdraw).div(supplys[from].amountSupply);
+		_setConfig(_liquidation_SS, from, getConfig(_liquidation_SS, from).add(addLiquidation));
+
+		withdrawLiquidation = getConfig(_liquidation_SS, from).mul(amountWithdraw).div(getConfig(_amountSupply_SS, from));
+		uint256 withdrawInterest = getConfig(_interests_SS, from).mul(amountWithdraw).div(getConfig(_amountSupply_SS, from));
 
 		uint256 withdrawLiquidationSupplyAmount =
-			totalLiquidation == 0 ? 0 : withdrawLiquidation.mul(totalLiquidationSupplyAmount).div(totalLiquidation);
+		totalLiquidation == 0 ? 0 : withdrawLiquidation.mul(totalLiquidationSupplyAmount).div(totalLiquidation);
 
 		if (withdrawLiquidationSupplyAmount < amountWithdraw.add(withdrawInterest))
 			withdrawSupplyAmount = amountWithdraw.add(withdrawInterest).sub(withdrawLiquidationSupplyAmount);
@@ -221,17 +224,19 @@ contract ONXPool is Configable, BaseMintField {
 		totalLiquidationSupplyAmount = totalLiquidationSupplyAmount.sub(withdrawLiquidationSupplyAmount);
 		totalPledge = totalPledge.sub(withdrawLiquidation);
 
-		supplys[from].interests = supplys[from].interests.sub(withdrawInterest);
-		supplys[from].liquidation = supplys[from].liquidation.sub(withdrawLiquidation);
-		supplys[from].amountSupply = supplys[from].amountSupply.sub(amountWithdraw);
+		_setConfig(_interests_SS, from, getConfig(_interests_SS, from).sub(withdrawInterest));
+		_setConfig(_liquidation_SS, from, getConfig(_liquidation_SS, from).sub(withdrawLiquidation));
+		_setConfig(_amountSupply_SS, from, getConfig(_amountSupply_SS, from).sub(amountWithdraw));
+
 		totalStake = totalStake.sub(amountWithdraw);
 
-		supplys[from].interestSettled = supplys[from].amountSupply == 0
+		_setConfig(_interestSettled_SS, from, getConfig(_amountSupply_SS, from) == 0
 			? 0
-			: interestPerSupply.mul(supplys[from].amountSupply).div(1e18);
-		supplys[from].liquidationSettled = supplys[from].amountSupply == 0
+			: interestPerSupply.mul(getConfig(_amountSupply_SS, from)).div(1e18));
+
+		_setConfig(_liquidationSettled_SS, from, getConfig(_amountSupply_SS, from) == 0
 			? 0
-			: liquidationPerSupply.mul(supplys[from].amountSupply).div(1e18);
+			: liquidationPerSupply.mul(getConfig(_amountSupply_SS, from)).div(1e18));
 
 		if (withdrawSupplyAmount > 0) {
 			TransferHelper.safeTransfer(supplyToken, msg.sender, withdrawSupplyAmount);
@@ -242,7 +247,7 @@ contract ONXPool is Configable, BaseMintField {
 		if (withdrawLiquidation > 0) {
 			if(collateralStrategy != address(0))
 			{
-					IONXStrategy(collateralStrategy).claim(from, withdrawLiquidation, totalLiquidation.add(withdrawLiquidation));
+				IONXStrategy(collateralStrategy).claim(from, withdrawLiquidation, totalLiquidation.add(withdrawLiquidation));
 			}
 			TransferHelper.safeTransfer(collateralToken, msg.sender, withdrawLiquidation);
 		}
@@ -266,14 +271,14 @@ contract ONXPool is Configable, BaseMintField {
 
 		uint256 pledgeRate = IConfig(config).getPoolValue(address(this), ConfigNames.POOL_PLEDGE_RATE);
 		uint256 maxAmount =
-			IConfig(config).convertTokenAmount(
-				collateralToken,
-				supplyToken,
-				borrows[from].amountCollateral.add(amountCollateral)
-			);
+		IConfig(config).convertTokenAmount(
+			collateralToken,
+			supplyToken,
+			getConfig(_amountCollateral_BS, from).add(amountCollateral)
+		);
 
 		uint256 maximumBorrow = maxAmount.mul(pledgeRate).div(1e18);
-		// uint repayAmount = getRepayAmount(borrows[from].amountCollateral, from);
+		// uint repayAmount = getRepayAmount(getConfig(_amountCollateral_BS, from), from);
 
 		require(repayAmount + expectBorrow <= maximumBorrow, "ONX: EXCEED MAX ALLOWED");
 		require(expectBorrow <= remainSupply, "ONX: INVALID BORROW");
@@ -284,22 +289,22 @@ contract ONXPool is Configable, BaseMintField {
 
 		if(collateralStrategy != address(0) && amountCollateral > 0)
 		{
-				IERC20(IONXStrategy(collateralStrategy).farmToken()).approve(collateralStrategy, amountCollateral);
-				IONXStrategy(collateralStrategy).invest(from, amountCollateral);
+			IERC20(IONXStrategy(collateralStrategy).farmToken()).approve(collateralStrategy, amountCollateral);
+			IONXStrategy(collateralStrategy).invest(from, amountCollateral);
 		}
 
-		if (borrows[from].index == 0) {
+		if (getConfig(_index_BS, from) == 0) {
 			borrowerList.push(from);
-			borrows[from].index = borrowerList.length;
+			_setConfig(_index_BS, from, borrowerList.length);
 			numberBorrowers++;
 		}
 
-		borrows[from].interests = borrows[from].interests.add(
-			interestPerBorrow.mul(borrows[from].amountBorrow).div(1e18).sub(borrows[from].interestSettled)
-		);
-		borrows[from].amountCollateral = borrows[from].amountCollateral.add(amountCollateral);
-		borrows[from].amountBorrow = borrows[from].amountBorrow.add(expectBorrow);
-		borrows[from].interestSettled = interestPerBorrow.mul(borrows[from].amountBorrow).div(1e18);
+		_setConfig(_interests_BS, from, getConfig(_interests_BS, from).add(
+				interestPerBorrow.mul(getConfig(_amountBorrow_BS, from)).div(1e18).sub(getConfig(_interestSettled_BS, from))
+			));
+		_setConfig(_amountCollateral_BS, from, getConfig(_amountCollateral_BS, from).add(amountCollateral));
+		_setConfig(_amountBorrow_BS, from, getConfig(_amountBorrow_BS, from).add(expectBorrow));
+		_setConfig(_interestSettled_BS, from, interestPerBorrow.mul(getConfig(_amountBorrow_BS, from)).div(1e18));
 
 		if (expectBorrow > 0) {
 			TransferHelper.safeTransfer(supplyToken, msg.sender, expectBorrow);
@@ -310,39 +315,39 @@ contract ONXPool is Configable, BaseMintField {
 	}
 
 	function repay(uint256 amountCollateral, address from)
-		public
-		onlyPlatform
-		returns (uint256 repayAmount, uint256 repayInterest)
+	public
+	onlyPlatform
+	returns (uint256 repayAmount, uint256 repayInterest)
 	{
-		require(amountCollateral <= borrows[from].amountCollateral, "ONX: NOT ENOUGH COLLATERAL");
+		require(amountCollateral <= getConfig(_amountCollateral_BS, from), "ONX: NOT ENOUGH COLLATERAL");
 		require(amountCollateral > 0, "ONX: INVALID AMOUNT TO REPAY");
 
 		uint256 amountIn = IERC20(supplyToken).balanceOf(address(this)).sub(remainSupply);
 
 		updateInterests();
 
-		borrows[from].interests = borrows[from].interests.add(
-			interestPerBorrow.mul(borrows[from].amountBorrow).div(1e18).sub(borrows[from].interestSettled)
-		);
+		_setConfig(_interests_BS, from, getConfig(_interests_BS, from).add(
+				interestPerBorrow.mul(getConfig(_amountBorrow_BS, from)).div(1e18).sub(getConfig(_interestSettled_BS, from))
+			));
 
-		repayAmount = borrows[from].amountBorrow.mul(amountCollateral).div(borrows[from].amountCollateral);
-		repayInterest = borrows[from].interests.mul(amountCollateral).div(borrows[from].amountCollateral);
+		repayAmount = getConfig(_amountBorrow_BS, from).mul(amountCollateral).div(getConfig(_amountCollateral_BS, from));
+		repayInterest = getConfig(_interests_BS, from).mul(amountCollateral).div(getConfig(_amountCollateral_BS, from));
 
 		totalPledge = totalPledge.sub(amountCollateral);
 		totalBorrow = totalBorrow.sub(repayAmount);
 
-		borrows[from].amountCollateral = borrows[from].amountCollateral.sub(amountCollateral);
-		borrows[from].amountBorrow = borrows[from].amountBorrow.sub(repayAmount);
-		borrows[from].interests = borrows[from].interests.sub(repayInterest);
-		borrows[from].interestSettled = borrows[from].amountBorrow == 0
+		_setConfig(_amountCollateral_BS, from, getConfig(_amountCollateral_BS, from).sub(amountCollateral));
+		_setConfig(_amountBorrow_BS, from, getConfig(_amountBorrow_BS, from).sub(repayAmount));
+		_setConfig(_interests_BS, from, getConfig(_interests_BS, from).sub(repayInterest));
+		_setConfig(_interestSettled_BS, from, getConfig(_amountBorrow_BS, from) == 0
 			? 0
-			: interestPerBorrow.mul(borrows[from].amountBorrow).div(1e18);
+			: interestPerBorrow.mul(getConfig(_amountBorrow_BS, from)).div(1e18));
 
 		remainSupply = remainSupply.add(repayAmount.add(repayInterest));
 
 		if(collateralStrategy != address(0))
 		{
-				IONXStrategy(collateralStrategy).withdraw(from, amountCollateral);
+			IONXStrategy(collateralStrategy).withdraw(from, amountCollateral);
 		}
 		TransferHelper.safeTransfer(collateralToken, msg.sender, amountCollateral);
 		require(amountIn >= repayAmount.add(repayInterest), "ONX: INVALID AMOUNT TO REPAY");
@@ -356,54 +361,57 @@ contract ONXPool is Configable, BaseMintField {
 	}
 
 	function liquidation(address _user, address from) public onlyPlatform returns (uint256 borrowAmount) {
-		require(supplys[from].amountSupply > 0, "ONX: ONLY SUPPLIER");
+		require(getConfig(_amountSupply_SS, from) > 0, "ONX: ONLY SUPPLIER");
 
 		updateInterests();
 
-		borrows[_user].interests = borrows[_user].interests.add(
-			interestPerBorrow.mul(borrows[_user].amountBorrow).div(1e18).sub(borrows[_user].interestSettled)
-		);
+		_setConfig(_interests_BS, _user, getConfig(_interests_BS, _user).add(
+				interestPerBorrow.mul(getConfig(_amountBorrow_BS, _user)).div(1e18).sub(getConfig(_interestSettled_BS, _user))
+			));
 
 		uint256 liquidationRate = IConfig(config).getPoolValue(address(this), ConfigNames.POOL_LIQUIDATION_RATE);
 
 		////// Used pool price for liquidation limit check
 		////// uint pledgePrice = IConfig(config).getPoolValue(address(this), ConfigNames.POOL_PRICE);
-		////// uint collateralValue = borrows[_user].amountCollateral.mul(pledgePrice).div(1e18);
+		////// uint collateralValue = getConfig(_amountCollateral_BS, _user).mul(pledgePrice).div(1e18);
 
 		////// Need to set token price for liquidation
 		uint256 collateralValue =
-		 	IConfig(config).convertTokenAmount(collateralToken, supplyToken, borrows[_user].amountCollateral);
+		IConfig(config).convertTokenAmount(collateralToken, supplyToken, getConfig(_amountCollateral_BS, _user));
 
-		uint256 expectedRepay = borrows[_user].amountBorrow.add(borrows[_user].interests);
+		uint256 expectedRepay = getConfig(_amountBorrow_BS, _user).add(getConfig(_interests_BS, _user));
 
 		require(expectedRepay >= collateralValue.mul(liquidationRate).div(1e18), "ONX: NOT LIQUIDABLE");
 
-		updateLiquidation(borrows[_user].amountCollateral);
+		updateLiquidation(getConfig(_amountCollateral_BS, _user));
 
-		totalLiquidation = totalLiquidation.add(borrows[_user].amountCollateral);
+		totalLiquidation = totalLiquidation.add(getConfig(_amountCollateral_BS, _user));
 		totalLiquidationSupplyAmount = totalLiquidationSupplyAmount.add(expectedRepay);
-		totalBorrow = totalBorrow.sub(borrows[_user].amountBorrow);
+		totalBorrow = totalBorrow.sub(getConfig(_amountBorrow_BS, _user));
 
-		borrowAmount = borrows[_user].amountBorrow;
+		borrowAmount = getConfig(_amountBorrow_BS, _user);
 
-		LiquidationStruct memory liq;
-		liq.amountCollateral = borrows[_user].amountCollateral;
-		liq.liquidationAmount = expectedRepay;
-		liq.timestamp = block.timestamp;
+		uint256 length = getConfig(_length_LS, _user);
+		uint256 id = uint256(_user) ^ length;
 
-		liquidationHistory[_user].push(liq);
+		_setConfig(_amountCollateral_LS, id, getConfig(_amountCollateral_BS, _user));
+		_setConfig(_liquidationAmount_LS, id, expectedRepay);
+		_setConfig(_timestamp_LS, id, block.timestamp);
+
+		_setConfig(_length_LS, _user, length + 1);
+
 		liquidationHistoryLength[_user]++;
 		if(collateralStrategy != address(0))
 		{
 			IONXStrategy(collateralStrategy).liquidation(_user);
 		}
 
-		emit Liquidation(from, _user, borrows[_user].amountBorrow, borrows[_user].amountCollateral);
+		emit Liquidation(from, _user, getConfig(_amountBorrow_BS, _user), getConfig(_amountCollateral_BS, _user));
 
-		borrows[_user].amountCollateral = 0;
-		borrows[_user].amountBorrow = 0;
-		borrows[_user].interests = 0;
-		borrows[_user].interestSettled = 0;
+		_setConfig(_amountCollateral_BS, _user, 0);
+		_setConfig(_amountBorrow_BS, _user, 0);
+		_setConfig(_interests_BS, _user, 0);
+		_setConfig(_interestSettled_BS, _user, 0);
 
 		if (borrowAmount > 0) {
 			_decreaseBorrowerProductivity(_user, borrowAmount);
@@ -413,6 +421,48 @@ contract ONXPool is Configable, BaseMintField {
 	function getTotalAmount() external view returns (uint256) {
 		return totalStake.add(totalBorrow);
 	}
+
+	function supplys(address user) external view returns (
+		uint256 amountSupply,
+		uint256 interestSettled,
+		uint256 liquidationSettled,
+		uint256 interests,
+		uint256 _liquidation
+	) {
+		amountSupply = getConfig(_amountSupply_SS, user);
+		interestSettled = getConfig(_interestSettled_SS, user);
+		liquidationSettled = getConfig(_liquidationSettled_SS, user);
+		interests = getConfig(_interests_SS, user);
+		_liquidation = getConfig(_liquidation_SS, user);
+	}
+
+	function borrows(address user) external view returns(
+		uint256 index,
+		uint256 amountCollateral,
+		uint256 interestSettled,
+		uint256 amountBorrow,
+		uint256 interests
+	) {
+		index = getConfig(_index_BS, user);
+		amountCollateral = getConfig(_amountCollateral_BS, user);
+		interestSettled = getConfig(_interestSettled_BS, user);
+		amountBorrow = getConfig(_amountBorrow_BS, user);
+		interests = getConfig(_interests_BS, user);
+	}
+
+	function liquidationHistory(address user, uint256 index) external view returns (
+		uint256 amountCollateral,
+		uint256 liquidationAmount,
+		uint256 timestamp
+	) {
+		uint256 id = uint256(user) ^ index;
+
+		amountCollateral = getConfig(_amountCollateral_LS, id);
+		liquidationAmount = getConfig(_liquidationAmount_LS, id);
+		timestamp = getConfig(_timestamp_LS, id);
+	}
+
+
 
 	function mint() external {
 		_mintLender();

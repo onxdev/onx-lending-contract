@@ -3,6 +3,7 @@ pragma solidity >=0.5.16;
 import "./libraries/TransferHelper.sol";
 import "./libraries/SafeMath.sol";
 import "./modules/BaseShareField.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 
 interface IONXStrategy {
     function invest(address user, uint256 amount) external; 
@@ -23,7 +24,7 @@ interface IONXFarm {
     function poolInfo(uint _index) external view returns(address, uint256, uint256, uint256);
 }
 
-contract ONXStrategyCollateral is IONXStrategy, BaseShareField {
+contract ONXStrategyCollateral is IONXStrategy, BaseShareField, Initializable {
 	event Mint(address indexed user, uint256 amount);
 	using SafeMath for uint256;
 	address public override interestToken;
@@ -33,7 +34,7 @@ contract ONXStrategyCollateral is IONXStrategy, BaseShareField {
 	uint256 public lpPoolpid;
 	address public factory;
 
-	constructor() public {
+	function strategy_initialize() public initializer {
 		factory = msg.sender;
 	}
 
