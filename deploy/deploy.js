@@ -1,11 +1,11 @@
 let fs = require("fs");
 let path = require("path");
-const { ethers, upgrades } = require("hardhat");
+const ethers = require("ethers")
 const ERC20 = require("../artifacts/contracts/test/ERC20TOKEN.sol/ERC20TOKEN.json")
 const WETH = require("../artifacts/contracts/weth/WETH.sol/WETH9.json")
 const AETH = require("../artifacts/contracts/test/AETH.sol/AETH.json")
 const ONXConfig = require("../artifacts/contracts/ONXConfig.sol/ONXConfig.json")
-const ONXPlatform = require("../artifacts/contracts/ONXPlatform.sol/ONXPlatform.json")
+const ONXPlateForm = require("../artifacts/contracts/ONXPlatform.sol/ONXPlatform.json")
 const ONXPool = require("../artifacts/contracts/ONX.sol/ONXPool.json")
 const ONXFactory = require("../artifacts/contracts/ONXFactory.sol/ONXFactory.json")
 const ONXStrategyCollateral = require("../artifacts/contracts/ONXStrategyCollateral.sol/ONXStrategyCollateral.json")
@@ -131,11 +131,11 @@ async function deploy() {
 
   // PLATFORM
   factory = new ethers.ContractFactory(
-    ONXPlatform.abi,
-    ONXPlatform.bytecode,
+    ONXPlateForm.abi,
+    ONXPlateForm.bytecode,
     walletWithProvider
   )
-  ins = await upgrades.deployProxy(factory, [])
+  ins = await factory.deploy(ETHER_SEND_CONFIG)
   await waitForMint(ins.deployTransaction.hash)
   PLATFORM_ADDRESS = ins.address
   console.log('PLATFORM_ADDRESS', PLATFORM_ADDRESS)
@@ -157,9 +157,7 @@ async function deploy() {
     ONXPool.bytecode,
     walletWithProvider
   )
-
-  ins = await upgrades.deployProxy(factory, [])
-
+  ins = await factory.deploy(ETHER_SEND_CONFIG)
   await waitForMint(ins.deployTransaction.hash)
   POOL_ADDRESS = ins.address
   console.log('POOL_ADDRESS', POOL_ADDRESS)
@@ -196,7 +194,7 @@ async function initialize() {
 
     ins = new ethers.Contract(
         PLATFORM_ADDRESS,
-        ONXPlatform.abi,
+        ONXPlateForm.abi,
         getWallet()
       )
     tx = await ins.setupConfig(CONFIG_ADDRESS, ETHER_SEND_CONFIG)
@@ -294,11 +292,11 @@ async function initialize() {
 
     ins = new ethers.Contract(
         PLATFORM_ADDRESS,
-        ONXPlatform.abi,
+        ONXPlateForm.abi,
         getWallet()
       )
     tx = await ins.setCollateralStrategy(LEND_TOKEN_ADDRESS, COLLATERAL_TOKEN_ADDRESS, STRATEGY_ADDRESS, ETHER_SEND_CONFIG)
-    console.log('ONXPlatform setCollateralStrategy')
+    console.log('ONXPlateForm setCollateralStrategy')
     await waitForMint(tx.hash)
 
 

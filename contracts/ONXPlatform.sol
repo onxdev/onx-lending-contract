@@ -4,7 +4,6 @@ import "./modules/Configable.sol";
 import "./modules/ConfigNames.sol";
 import "./libraries/SafeMath.sol";
 import "./libraries/TransferHelper.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 
 interface IWETH {
 	function deposit() external payable;
