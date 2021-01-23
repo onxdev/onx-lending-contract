@@ -6,7 +6,6 @@ import "./modules/Configable.sol";
 import "./modules/ConfigNames.sol";
 import "./modules/BaseMintField.sol";
 import "./libraries/Configurable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 
 interface IONXStrategy {
 	function invest(address user, uint256 amount) external;
@@ -20,7 +19,7 @@ interface IONXStrategy {
 	function farmToken() external view returns (address);
 }
 
-contract ONXPool is Configable, BaseMintField, Configurable, Initializable {
+contract ONXPool is BaseMintField, Configurable {
 	using SafeMath for uint256;
 
 	address public factory;
@@ -81,9 +80,10 @@ contract ONXPool is Configable, BaseMintField, Configurable, Initializable {
 	);
 	event Reinvest(address indexed _user, uint256 _reinvestAmount);
 
-	function initialize() public initializer
+	function initialize(address _factory) external initializer
 	{
-		factory = msg.sender;
+		owner = _factory;
+		factory = _factory;
 	}
 
 	function setCollateralStrategy(address _collateralStrategy) external onlyPlatform

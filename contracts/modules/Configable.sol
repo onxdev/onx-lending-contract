@@ -2,6 +2,8 @@
 pragma solidity >=0.5.16;
 pragma experimental ABIEncoderV2;
 
+import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
+
 interface IConfig {
 	function developer() external view returns (address);
 
@@ -77,12 +79,12 @@ interface IConfig {
 	function WETH() external view returns (address);
 }
 
-contract Configable {
+contract Configable is Initializable {
 	address public config;
 	address public owner;
 	event OwnerChanged(address indexed _oldOwner, address indexed _newOwner);
 
-	constructor() public {
+	function __config_initialize() internal initializer {
 		owner = msg.sender;
 	}
 

@@ -4,7 +4,6 @@ import "./modules/Configable.sol";
 import "./modules/ConfigNames.sol";
 import "./libraries/SafeMath.sol";
 import "./libraries/TransferHelper.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 
 interface IWETH {
 	function deposit() external payable;
@@ -44,7 +43,7 @@ interface IONXFactory {
 
 contract ONXPlatform is Configable {
 	using SafeMath for uint256;
-	uint256 private unlocked = 1;
+	uint256 private unlocked;
 	modifier lock() {
 		require(unlocked == 1, "Locked");
 		unlocked = 0;
@@ -53,6 +52,11 @@ contract ONXPlatform is Configable {
 	}
 
 	receive() external payable {}
+
+	function initialize() external initializer {
+		Configable.__config_initialize();
+		unlocked = 1;
+	}
 
 	function deposit(address _lendToken, address _collateralToken, uint256 _amountDeposit) external lock {
 		require(IConfig(config).getValue(ConfigNames.DEPOSIT_ENABLE) == 1, "NOT ENABLE NOW");

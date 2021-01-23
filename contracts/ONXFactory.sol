@@ -15,13 +15,29 @@ contract ONXFactory is Configable {
 	mapping(address => bool) public isPool;
 	mapping(address => mapping(address => address)) public getPool;
 
-	function createPool(address _lendToken, address _collateralToken) external returns (address pool) {
+	function initialize() public initializer {
+		Configable.__config_initialize();
+	}
+
+//	function createPool(address _lendToken, address _collateralToken) external returns (address pool) {
+//		require(getPool[_lendToken][_collateralToken] == address(0), "ALREADY CREATED");
+//		bytes32 salt = keccak256(abi.encodePacked(_lendToken, _collateralToken));
+//		bytes memory bytecode = type(ONXPool).creationCode;
+//		assembly {
+//			pool := create2(0, add(bytecode, 32), mload(bytecode), salt)
+//		}
+//		getPool[_lendToken][_collateralToken] = pool;
+//		allPools.push(pool);
+//		isPool[pool] = true;
+//		IConfig(config).initPoolParams(pool);
+//		IONXPool(pool).setupConfig(config);
+//		IONXPool(pool).init(_lendToken, _collateralToken);
+//		emit PoolCreated(_lendToken, _collateralToken, pool);
+//		return pool;
+//	}
+
+	function createPool(address pool, address _lendToken, address _collateralToken) external {
 		require(getPool[_lendToken][_collateralToken] == address(0), "ALREADY CREATED");
-		bytes32 salt = keccak256(abi.encodePacked(_lendToken, _collateralToken));
-		bytes memory bytecode = type(ONXPool).creationCode;
-		assembly {
-			pool := create2(0, add(bytecode, 32), mload(bytecode), salt)
-		}
 		getPool[_lendToken][_collateralToken] = pool;
 		allPools.push(pool);
 		isPool[pool] = true;
@@ -29,7 +45,6 @@ contract ONXFactory is Configable {
 		IONXPool(pool).setupConfig(config);
 		IONXPool(pool).init(_lendToken, _collateralToken);
 		emit PoolCreated(_lendToken, _collateralToken, pool);
-		return pool;
 	}
 
 	function countPools() external view returns (uint256) {
